@@ -2,6 +2,7 @@
 /**
  * فایل اصلی مدیریت کاروان
  * تمام عملیات سایت از این فایل مدیریت می‌شود
+ * version_3
  */
 
 header("Content-Type: application/json");
@@ -73,7 +74,7 @@ function createKarvanDatabase_003($serialNumber) {
     try {
         $dbPath = DB_PATH . $serialNumber . '.sqlite';
         if (file_exists($dbPath)) {
-            return false; // دیتابیس قبلاً وجود دارد
+            return false;
         }
         
         $db = new PDO("sqlite:" . $dbPath);
@@ -108,6 +109,17 @@ function createKarvanDatabase_003($serialNumber) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
         
+        // جدول تنظیمات کاروان (برای ذخیره تنظیمات مثل تعداد روز نگهداری)
+        $db->exec("CREATE TABLE karvan_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            setting_key TEXT UNIQUE NOT NULL,
+            setting_value TEXT NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        // درج تنظیمات پیش‌فرض: 10 روز نگهداری
+        $db->exec("INSERT INTO karvan_settings (setting_key, setting_value) VALUES ('location_retention_days', '10')");
+        
         logDebug_999("دیتابیس کاروان $serialNumber ایجاد شد", "karvan_manager.php");
         return true;
     } catch (PDOException $e) {
@@ -140,6 +152,44 @@ function generateRandomPassword_005() {
 }
 // پایان تابع generateRandomPassword_005
 
+// تابع دریافت تنظیمات کاروان - شماره 027
+// ورودی: serial (عدد), setting_key (رشته)
+// خروجی: مقدار تنظیمات (رشته) یا null
+function getKarvanSetting_027($serialNumber, $settingKey) {
+    $db = connectKarvanDB_002($serialNumber);
+    if (!$db) return null;
+    
+    try {
+        $stmt = $db->prepare("SELECT setting_value FROM karvan_settings WHERE setting_key = ?");
+        $stmt->execute([$settingKey]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['setting_value'] : null;
+    } catch (PDOException $e) {
+        logError_999("خطا در دریافت تنظیمات: " . $e->getMessage(), "karvan_manager.php");
+        return null;
+    }
+}
+// پایان تابع getKarvanSetting_027
+
+// تابع ذخیره تنظیمات کاروان - شماره 028
+// ورودی: serial (عدد), setting_key (رشته), setting_value (رشته)
+// خروجی: boolean (موفقیت)
+function setKarvanSetting_028($serialNumber, $settingKey, $settingValue) {
+    $db = connectKarvanDB_002($serialNumber);
+    if (!$db) return false;
+    
+    try {
+        $stmt = $db->prepare("INSERT OR REPLACE INTO karvan_settings (setting_key, setting_value, updated_at) 
+                              VALUES (?, ?, datetime('now'))");
+        $stmt->execute([$settingKey, $settingValue]);
+        return true;
+    } catch (PDOException $e) {
+        logError_999("خطا در ذخیره تنظیمات: " . $e->getMessage(), "karvan_manager.php");
+        return false;
+    }
+}
+// پایان تابع setKarvanSetting_028
+
 // ============================================
 // مدیریت درخواست‌های API
 // ============================================
@@ -166,11 +216,9 @@ switch ($action) {
     case 'update_karvan':
         updateKarvan_011();
         break;
-
-case 'get_all_requests':
-    getAllRequests_026();
-    break;
-
+    case 'get_all_requests':
+        getAllRequests_026();
+        break;
     case 'get_karvan_messages':
         getKarvanMessages_012();
         break;
@@ -189,6 +237,27 @@ case 'get_all_requests':
     case 'get_locations':
         getLocations_017();
         break;
+    case 'get_path':
+        getPath_029();
+        break;
+    case 'get_users_list':
+        getUsersList_024();
+        break;
+    case 'get_user_locations':
+        getUserLocations_030();
+        break;
+    case 'delete_user_locations':
+        deleteUserLocations_031();
+        break;
+    case 'get_retention_days':
+        getRetentionDays_032();
+        break;
+    case 'set_retention_days':
+        setRetentionDays_033();
+        break;
+    case 'cleanup_locations':
+        cleanupLocations_034();
+        break;
     case 'leader_login':
         leaderLogin_018();
         break;
@@ -206,9 +275,6 @@ case 'get_all_requests':
         break;
     case 'delete_all_messages':
         deleteAllMessages_023();
-        break;
-    case 'get_users_list':
-        getUsersList_024();
         break;
     case 'update_user':
         updateUser_025();
@@ -284,7 +350,6 @@ function changeManagerPassword_007() {
     }
     
     try {
-        // بررسی رمز فعلی
         $stmt = $db->prepare("SELECT password FROM manager_password WHERE id = 1");
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -294,7 +359,6 @@ function changeManagerPassword_007() {
             return;
         }
         
-        // به‌روزرسانی رمز
         $stmt = $db->prepare("UPDATE manager_password SET password = ? WHERE id = 1");
         $stmt->execute([$newPassword]);
         
@@ -309,9 +373,6 @@ function changeManagerPassword_007() {
 
 // تابع ایجاد درخواست کاروان جدید - شماره 008
 function createKarvanRequest_008() {
-    // ورودی: karvan_name, phone (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...', 'request_id': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $karvanName = isset($input['karvan_name']) ? trim($input['karvan_name']) : '';
     $phone = isset($input['phone']) ? trim($input['phone']) : '';
@@ -343,9 +404,6 @@ function createKarvanRequest_008() {
 
 // تابع تایید کاروان توسط مدیر - شماره 009
 function approveKarvan_009() {
-    // ورودی: request_id, karvan_name, phone (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...', 'serial': '...', 'password': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $requestId = isset($input['request_id']) ? intval($input['request_id']) : 0;
     $karvanName = isset($input['karvan_name']) ? trim($input['karvan_name']) : '';
@@ -363,7 +421,6 @@ function approveKarvan_009() {
     }
     
     try {
-        // بررسی وجود درخواست
         $stmt = $db->prepare("SELECT * FROM new_requests WHERE id = ? AND status = 'pending'");
         $stmt->execute([$requestId]);
         $request = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -373,7 +430,6 @@ function approveKarvan_009() {
             return;
         }
         
-        // تولید شماره سریال و رمز
         $serialNumber = getNextSerialNumber_004();
         if ($serialNumber === null) {
             echo json_encode(['status' => 'error', 'message' => 'خطا در تولید شماره سریال']);
@@ -382,28 +438,22 @@ function approveKarvan_009() {
         
         $karvanPassword = generateRandomPassword_005();
         
-        // ایجاد دیتابیس کاروان
         if (!createKarvanDatabase_003($serialNumber)) {
             echo json_encode(['status' => 'error', 'message' => 'خطا در ایجاد دیتابیس کاروان']);
             return;
         }
         
-        // ثبت در جدول karvanha
         $stmt = $db->prepare("INSERT INTO karvanha (name, serial_number, password, case_status, max_number) VALUES (?, ?, ?, 1, 100)");
         $stmt->execute([$karvanName, $serialNumber, $karvanPassword]);
         
-        // به‌روزرسانی وضعیت درخواست
         $stmt = $db->prepare("UPDATE new_requests SET status = 'approved' WHERE id = ?");
         $stmt->execute([$requestId]);
         
-        // ثبت رییس کاروان در دیتابیس کاروان
         $karvanDB = connectKarvanDB_002($serialNumber);
         if ($karvanDB) {
-            // رییس کاروان با username ویژه
             $stmt = $karvanDB->prepare("INSERT INTO users (username, password, phone, chat_permission, is_active) VALUES ('leader', ?, ?, 'read_write', 1)");
             $stmt->execute([$karvanPassword, $phone]);
             
-            // اضافه کردن رییس به جدول موقعیت‌ها
             $stmt = $karvanDB->prepare("INSERT INTO user_locations (username, latitude, longitude, location_time) VALUES ('leader', 0, 0, datetime('now'))");
             $stmt->execute();
         }
@@ -426,9 +476,6 @@ function approveKarvan_009() {
 
 // تابع دریافت لیست کاروان‌ها - شماره 010
 function getKarvanList_010() {
-    // ورودی: ندارد
-    // خروجی: لیست کاروان‌ها با تمام اطلاعات
-    
     $db = connectManagerDB_001();
     if (!$db) {
         echo json_encode(['status' => 'error', 'message' => 'خطا در اتصال به دیتابیس']);
@@ -449,9 +496,6 @@ function getKarvanList_010() {
 
 // تابع ویرایش کاروان - شماره 011
 function updateKarvan_011() {
-    // ورودی: id, name, serial_number, password, case_status, max_number (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $id = isset($input['id']) ? intval($input['id']) : 0;
     $name = isset($input['name']) ? trim($input['name']) : '';
@@ -486,9 +530,6 @@ function updateKarvan_011() {
 
 // تابع دریافت پیام‌های چت کاروان - شماره 012
 function getKarvanMessages_012() {
-    // ورودی: serial_number (GET)
-    // خروجی: لیست پیام‌ها
-    
     $serialNumber = isset($_GET['serial']) ? intval($_GET['serial']) : 0;
     
     if ($serialNumber <= 0) {
@@ -516,9 +557,6 @@ function getKarvanMessages_012() {
 
 // تابع حذف پیام - شماره 013
 function deleteMessage_013() {
-    // ورودی: serial_number, message_id (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     $messageId = isset($input['message_id']) ? intval($input['message_id']) : 0;
@@ -549,9 +587,6 @@ function deleteMessage_013() {
 
 // تابع ثبت‌نام کاربر - شماره 014
 function userRegister_014() {
-    // ورودی: serial_number, username, phone (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     $username = isset($input['username']) ? trim($input['username']) : '';
@@ -569,7 +604,6 @@ function userRegister_014() {
     }
     
     try {
-        // بررسی وجود کاروان و فعال بودن
         $stmt = $db->prepare("SELECT * FROM karvanha WHERE serial_number = ? AND case_status = 1");
         $stmt->execute([$serialNumber]);
         $karvan = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -579,8 +613,6 @@ function userRegister_014() {
             return;
         }
         
-        // ثبت درخواست در دیتابیس کاروان (جدول جدید برای درخواست‌ها)
-        // برای سادگی، درخواست‌ها را در جدول new_requests مدیر ذخیره می‌کنیم
         $stmt = $db->prepare("INSERT INTO new_requests (karvan_name, phone, status) VALUES (?, ?, 'pending_user')");
         $stmt->execute(["کاروان $serialNumber - $username", $phone]);
         $requestId = $db->lastInsertId();
@@ -596,9 +628,6 @@ function userRegister_014() {
 
 // تابع ورود کاربر - شماره 015
 function userLogin_015() {
-    // ورودی: serial_number, username, password (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...', 'chat_permission': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     $username = isset($input['username']) ? trim($input['username']) : '';
@@ -628,7 +657,6 @@ function userLogin_015() {
                 'username' => $user['username']
             ]);
         } else {
-            // بررسی اینکه کاربر وجود دارد اما غیرفعال است
             $stmt = $db->prepare("SELECT * FROM users WHERE username = ? AND is_active = 0");
             $stmt->execute([$username]);
             $inactiveUser = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -648,9 +676,6 @@ function userLogin_015() {
 
 // تابع ارسال موقعیت - شماره 016
 function sendLocation_016() {
-    // ورودی: serial, username, latitude, longitude, location_time (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     $username = isset($input['username']) ? trim($input['username']) : '';
@@ -682,13 +707,7 @@ function sendLocation_016() {
 }
 // پایان تابع sendLocation_016
 
-// تابع دریافت موقعیت‌ها - شماره 017
-// تابع دریافت موقعیت‌ها - شماره 017
-// ورودی: serial (GET)
-// خروجی: آخرین موقعیت هر فرد
-// تابع دریافت موقعیت‌ها - شماره 017
-// ورودی: serial (GET)
-// خروجی: آخرین موقعیت هر فرد + موقعیت فعلی کاربر (اگر ارسال نشده باشد)
+// تابع دریافت موقعیت‌ها (آخرین موقعیت هر فرد) - شماره 017
 function getLocations_017() {
     $serialNumber = isset($_GET['serial']) ? intval($_GET['serial']) : 0;
     $username = isset($_GET['username']) ? trim($_GET['username']) : '';
@@ -705,7 +724,6 @@ function getLocations_017() {
     }
     
     try {
-        // دریافت آخرین موقعیت هر فرد
         $sql = "SELECT * FROM user_locations 
                 WHERE id IN (
                     SELECT MAX(id) 
@@ -716,7 +734,6 @@ function getLocations_017() {
         $stmt = $db->query($sql);
         $locations = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // اگر کاربر مشخص شده و در لیست نیست، یک رکورد پیش‌فرض برای او ایجاد کن
         if (!empty($username)) {
             $found = false;
             foreach ($locations as $loc) {
@@ -727,13 +744,12 @@ function getLocations_017() {
             }
             
             if (!$found) {
-                // کاربر موقعیتی ندارد - یک موقعیت پیش‌فرض (تهران) با پیام خاص اضافه کن
                 $locations[] = [
                     'username' => $username,
                     'latitude' => 35.6892,
                     'longitude' => 51.3890,
                     'location_time' => date('Y-m-d H:i:s'),
-                    'is_default' => true  // علامت‌گذاری به عنوان موقعیت پیش‌فرض
+                    'is_default' => true
                 ];
             }
         }
@@ -745,14 +761,246 @@ function getLocations_017() {
     }
 }
 // پایان تابع getLocations_017
-// پایان تابع getLocations_017
-// پایان تابع getLocations_017
+
+// تابع دریافت مسیر افراد - شماره 029
+// ورودی: serial, usernames (با کاما جدا شده), days (تعداد روز)
+// خروجی: لیست نقاط مسیر هر فرد
+function getPath_029() {
+    $serialNumber = isset($_GET['serial']) ? intval($_GET['serial']) : 0;
+    $usernamesParam = isset($_GET['usernames']) ? trim($_GET['usernames']) : '';
+    $days = isset($_GET['days']) ? intval($_GET['days']) : 10;
+    
+    if ($serialNumber <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'شماره سریال نامعتبر']);
+        return;
+    }
+    
+    if (empty($usernamesParam)) {
+        echo json_encode(['status' => 'error', 'message' => 'نام کاربری انتخاب نشده است']);
+        return;
+    }
+    
+    if ($days <= 0) $days = 10;
+    if ($days > 365) $days = 365;
+    
+    $db = connectKarvanDB_002($serialNumber);
+    if (!$db) {
+        echo json_encode(['status' => 'error', 'message' => 'دیتابیس کاروان پیدا نشد']);
+        return;
+    }
+    
+    try {
+        $usernames = array_map('trim', explode(',', $usernamesParam));
+        $usernames = array_filter($usernames);
+        
+        if (empty($usernames)) {
+            echo json_encode(['status' => 'error', 'message' => 'نام کاربری معتبر نیست']);
+            return;
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($usernames), '?'));
+        $cutoffTime = date('Y-m-d H:i:s', strtotime("-$days days"));
+        
+        $sql = "SELECT username, latitude, longitude, location_time 
+                FROM user_locations 
+                WHERE username IN ($placeholders) 
+                AND location_time >= ? 
+                ORDER BY username, location_time ASC";
+        
+        $params = array_merge($usernames, [$cutoffTime]);
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $locations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $grouped = [];
+        foreach ($locations as $loc) {
+            $grouped[$loc['username']][] = $loc;
+        }
+        
+        echo json_encode([
+            'status' => 'success',
+            'data' => $grouped,
+            'days' => $days,
+            'cutoff' => $cutoffTime
+        ]);
+    } catch (PDOException $e) {
+        logError_999("خطا در دریافت مسیر: " . $e->getMessage(), "karvan_manager.php");
+        echo json_encode(['status' => 'error', 'message' => 'خطا در دریافت مسیر']);
+    }
+}
+// پایان تابع getPath_029
+
+// تابع دریافت تمام مختصات یک فرد - شماره 030
+// ورودی: serial, username (GET)
+// خروجی: لیست تمام مختصات فرد
+function getUserLocations_030() {
+    $serialNumber = isset($_GET['serial']) ? intval($_GET['serial']) : 0;
+    $username = isset($_GET['username']) ? trim($_GET['username']) : '';
+    
+    if ($serialNumber <= 0 || empty($username)) {
+        echo json_encode(['status' => 'error', 'message' => 'اطلاعات ناقص است']);
+        return;
+    }
+    
+    $db = connectKarvanDB_002($serialNumber);
+    if (!$db) {
+        echo json_encode(['status' => 'error', 'message' => 'دیتابیس کاروان پیدا نشد']);
+        return;
+    }
+    
+    try {
+        $stmt = $db->prepare("SELECT * FROM user_locations WHERE username = ? ORDER BY location_time DESC");
+        $stmt->execute([$username]);
+        $locations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo json_encode(['status' => 'success', 'data' => $locations, 'username' => $username]);
+    } catch (PDOException $e) {
+        logError_999("خطا در دریافت مختصات فرد: " . $e->getMessage(), "karvan_manager.php");
+        echo json_encode(['status' => 'error', 'message' => 'خطا در دریافت مختصات']);
+    }
+}
+// پایان تابع getUserLocations_030
+
+// تابع حذف مختصات انتخابی یک فرد - شماره 031
+// ورودی: serial, username, location_ids (آرایه از IDها) - POST
+// خروجی: تعداد حذف شده
+function deleteUserLocations_031() {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
+    $username = isset($input['username']) ? trim($input['username']) : '';
+    $locationIds = isset($input['location_ids']) ? $input['location_ids'] : [];
+    
+    if ($serialNumber <= 0 || empty($username) || empty($locationIds)) {
+        echo json_encode(['status' => 'error', 'message' => 'اطلاعات ناقص است']);
+        return;
+    }
+    
+    if (!is_array($locationIds)) {
+        echo json_encode(['status' => 'error', 'message' => 'فرمت اطلاعات نامعتبر']);
+        return;
+    }
+    
+    $db = connectKarvanDB_002($serialNumber);
+    if (!$db) {
+        echo json_encode(['status' => 'error', 'message' => 'دیتابیس کاروان پیدا نشد']);
+        return;
+    }
+    
+    try {
+        $ids = array_map('intval', $locationIds);
+        $ids = array_filter($ids, function($id) { return $id > 0; });
+        
+        if (empty($ids)) {
+            echo json_encode(['status' => 'error', 'message' => 'شناسه معتبر نیست']);
+            return;
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "DELETE FROM user_locations WHERE username = ? AND id IN ($placeholders)";
+        $params = array_merge([$username], $ids);
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $deletedCount = $stmt->rowCount();
+        
+        logDebug_999("$deletedCount مختصات از $username حذف شد", "karvan_manager.php");
+        echo json_encode(['status' => 'success', 'message' => "$deletedCount مختصات حذف شد", 'deleted' => $deletedCount]);
+    } catch (PDOException $e) {
+        logError_999("خطا در حذف مختصات: " . $e->getMessage(), "karvan_manager.php");
+        echo json_encode(['status' => 'error', 'message' => 'خطا در حذف مختصات']);
+    }
+}
+// پایان تابع deleteUserLocations_031
+
+// تابع دریافت تعداد روز نگهداری - شماره 032
+function getRetentionDays_032() {
+    $serialNumber = isset($_GET['serial']) ? intval($_GET['serial']) : 0;
+    
+    if ($serialNumber <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'شماره سریال نامعتبر']);
+        return;
+    }
+    
+    $days = getKarvanSetting_027($serialNumber, 'location_retention_days');
+    if ($days === null) {
+        $days = '10';
+    }
+    
+    echo json_encode(['status' => 'success', 'days' => intval($days)]);
+}
+// پایان تابع getRetentionDays_032
+
+// تابع ذخیره تعداد روز نگهداری - شماره 033
+function setRetentionDays_033() {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
+    $days = isset($input['days']) ? intval($input['days']) : 10;
+    
+    if ($serialNumber <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'شماره سریال نامعتبر']);
+        return;
+    }
+    
+    if ($days < 1) $days = 1;
+    if ($days > 365) $days = 365;
+    
+    $result = setKarvanSetting_028($serialNumber, 'location_retention_days', strval($days));
+    
+    if ($result) {
+        logDebug_999("تعداد روز نگهداری برای کاروان $serialNumber به $days تغییر کرد", "karvan_manager.php");
+        echo json_encode(['status' => 'success', 'message' => 'تنظیمات ذخیره شد', 'days' => $days]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'خطا در ذخیره تنظیمات']);
+    }
+}
+// پایان تابع setRetentionDays_033
+
+// تابع پاکسازی مختصات قدیمی - شماره 034
+// ورودی: serial (POST)
+// خروجی: تعداد حذف شده
+function cleanupLocations_034() {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
+    
+    if ($serialNumber <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'شماره سریال نامعتبر']);
+        return;
+    }
+    
+    $days = getKarvanSetting_027($serialNumber, 'location_retention_days');
+    if ($days === null) $days = 10;
+    $days = intval($days);
+    
+    $db = connectKarvanDB_002($serialNumber);
+    if (!$db) {
+        echo json_encode(['status' => 'error', 'message' => 'دیتابیس کاروان پیدا نشد']);
+        return;
+    }
+    
+    try {
+        $cutoffTime = date('Y-m-d H:i:s', strtotime("-$days days"));
+        
+        $stmt = $db->prepare("DELETE FROM user_locations WHERE location_time < ?");
+        $stmt->execute([$cutoffTime]);
+        $deletedCount = $stmt->rowCount();
+        
+        logDebug_999("$deletedCount مختصات قدیمی‌تر از $days روز از کاروان $serialNumber حذف شد", "karvan_manager.php");
+        echo json_encode([
+            'status' => 'success',
+            'message' => "$deletedCount مختصات قدیمی‌تر از $days روز حذف شد",
+            'deleted' => $deletedCount,
+            'days' => $days,
+            'cutoff' => $cutoffTime
+        ]);
+    } catch (PDOException $e) {
+        logError_999("خطا در پاکسازی مختصات: " . $e->getMessage(), "karvan_manager.php");
+        echo json_encode(['status' => 'error', 'message' => 'خطا در پاکسازی مختصات']);
+    }
+}
+// پایان تابع cleanupLocations_034
 
 // تابع ورود رییس کاروان - شماره 018
 function leaderLogin_018() {
-    // ورودی: serial_number, password (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     $password = isset($input['password']) ? trim($input['password']) : '';
@@ -791,9 +1039,6 @@ function leaderLogin_018() {
 
 // تابع دریافت درخواست‌های pending - شماره 019
 function getPendingRequests_019() {
-    // ورودی: serial (GET)
-    // خروجی: لیست درخواست‌های کاربران برای این کاروان
-    
     $serialNumber = isset($_GET['serial']) ? intval($_GET['serial']) : 0;
     
     if ($serialNumber <= 0) {
@@ -822,21 +1067,17 @@ function getPendingRequests_019() {
 
 // تابع تایید کاربر توسط رییس - شماره 020
 function approveUser_020() {
-    // ورودی: serial, username, phone, password (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     $username = isset($input['username']) ? trim($input['username']) : '';
     $phone = isset($input['phone']) ? trim($input['phone']) : '';
     $userPassword = isset($input['password']) ? trim($input['password']) : '';
     
-    if ($serialNumber <= 0 || empty($username) || empty($phone) || empty($userPassword)) {
+    if ($serialNumber <= 0 || empty($username) || empty($phone)) {
         echo json_encode(['status' => 'error', 'message' => 'اطلاعات ناقص است']);
         return;
     }
     
-    // اگر رمز ارسال نشده، تولید می‌کنیم
     if (empty($userPassword)) {
         $userPassword = generateRandomPassword_005();
     }
@@ -848,15 +1089,12 @@ function approveUser_020() {
     }
     
     try {
-        // ثبت کاربر در دیتابیس کاروان
         $stmt = $db->prepare("INSERT INTO users (username, password, phone, chat_permission, is_active) VALUES (?, ?, ?, 'read_write', 1)");
         $stmt->execute([$username, $userPassword, $phone]);
         
-        // اضافه کردن کاربر به جدول موقعیت‌ها
         $stmt = $db->prepare("INSERT INTO user_locations (username, latitude, longitude, location_time) VALUES (?, 0, 0, datetime('now'))");
         $stmt->execute([$username]);
         
-        // به‌روزرسانی درخواست در دیتابیس مدیر
         $managerDB = connectManagerDB_001();
         if ($managerDB) {
             $stmt = $managerDB->prepare("UPDATE new_requests SET status = 'approved' WHERE karvan_name = ? AND phone = ? AND status = 'pending_user'");
@@ -878,9 +1116,6 @@ function approveUser_020() {
 
 // تابع ارسال پیام چت - شماره 021
 function sendChatMessage_021() {
-    // ورودی: serial, username, message (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     $username = isset($input['username']) ? trim($input['username']) : '';
@@ -898,7 +1133,6 @@ function sendChatMessage_021() {
     }
     
     try {
-        // بررسی دسترسی کاربر برای نوشتن
         $stmt = $db->prepare("SELECT chat_permission FROM users WHERE username = ? AND is_active = 1");
         $stmt->execute([$username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -922,9 +1156,6 @@ function sendChatMessage_021() {
 
 // تابع دریافت پیام‌های چت - شماره 022
 function getChatMessages_022() {
-    // ورودی: serial (GET)
-    // خروجی: لیست پیام‌ها
-    
     $serialNumber = isset($_GET['serial']) ? intval($_GET['serial']) : 0;
     
     if ($serialNumber <= 0) {
@@ -952,9 +1183,6 @@ function getChatMessages_022() {
 
 // تابع حذف همه پیام‌ها - شماره 023
 function deleteAllMessages_023() {
-    // ورودی: serial (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     
@@ -983,9 +1211,6 @@ function deleteAllMessages_023() {
 
 // تابع دریافت لیست کاربران - شماره 024
 function getUsersList_024() {
-    // ورودی: serial (GET)
-    // خروجی: لیست کاربران
-    
     $serialNumber = isset($_GET['serial']) ? intval($_GET['serial']) : 0;
     
     if ($serialNumber <= 0) {
@@ -1013,9 +1238,6 @@ function getUsersList_024() {
 
 // تابع ویرایش کاربر - شماره 025
 function updateUser_025() {
-    // ورودی: serial, username, password, chat_permission, is_active (POST)
-    // خروجی: {'status': 'success'/'error', 'message': '...'}
-    
     $input = json_decode(file_get_contents('php://input'), true);
     $serialNumber = isset($input['serial']) ? intval($input['serial']) : 0;
     $username = isset($input['username']) ? trim($input['username']) : '';
