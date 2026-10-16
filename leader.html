@@ -6,7 +6,7 @@
     <link rel="manifest" href="manifest.json">
     <title>پنل رییس کاروان</title>
     <style>
-        /* استایل‌های مشابه با تغییرات رنگ */
+        /* version_3 */
         * {
             margin: 0;
             padding: 0;
@@ -185,41 +185,121 @@
             margin: 5px 0;
             font-size: 13px;
         }
-
-/* استایل برای نشانگرهای سفارشی Leaflet */
-.custom-div-icon {
-    background: transparent;
-    border: none;
-}
-.leaflet-popup-content {
-    min-width: 200px;
-}
-
+        .custom-div-icon {
+            background: transparent;
+            border: none;
+        }
+        .leaflet-popup-content {
+            min-width: 200px;
+        }
+        .checkbox-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+            background: #fafafa;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .checkbox-item:hover {
+            background: #fff3e0;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-left: 10px;
+            cursor: pointer;
+            transform: scale(1.3);
+        }
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+            flex: 1;
+        }
+        .route-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 5px;
+            border-radius: 3px;
+        }
+        .user-locations-table {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .user-locations-table table {
+            margin: 0;
+        }
+        .user-locations-table th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .speed-label {
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+            border: 1px solid #FF9800;
+            white-space: nowrap;
+        }
+        .selection-panel {
+            background: #fff3e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #FF9800;
+        }
     </style>
- <!-- برای نمایش نقشه  شروع -->
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- برای نمایش نقشه  پایان -->
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-
 </head>
 
 <body>
-<script>alert('ver_6');</script>
+<script>alert('ver_7');</script>
 
     <div class="container">
         <!-- بخش انتخاب ورود -->
         <div id="entrySection">
             <h1>🚐 پنل رییس کاروان</h1>
-            
+
             <button class="btn btn-warning btn-block" onclick="showCreateKarvan_001()">درخواست ایجاد کاروان جدید</button>
             <button class="btn btn-success btn-block" onclick="showLogin_002()">ورود به کاروان موجود</button>
-            
-            <!-- فرم درخواست ایجاد کاروان -->
+
             <div id="createKarvanSection" class="hidden">
                 <h3>📝 درخواست کاروان جدید</h3>
                 <div class="form-group">
@@ -234,8 +314,7 @@
                 <button class="btn btn-sm" onclick="hideCreateKarvan_004()">لغو</button>
                 <div id="createKarvanMessage" class="message hidden"></div>
             </div>
-            
-            <!-- فرم ورود -->
+
             <div id="loginSection" class="hidden">
                 <h3>🔐 ورود به کاروان</h3>
                 <div class="form-group">
@@ -251,27 +330,70 @@
                 <div id="loginMessage" class="message hidden"></div>
             </div>
         </div>
-        
+
         <!-- بخش داشبورد رییس -->
         <div id="dashboardSection" class="hidden">
             <h1>🚐 <span id="karvanNameDisplay"></span></h1>
-            
+
             <div class="location-status">
                 <span id="locationStatus">⏳ در حال دریافت موقعیت...</span>
                 <button class="btn btn-sm btn-info" onclick="sendLocationNow_007()">ارسال موقعیت لحظه‌ای</button>
             </div>
-            
+
             <button class="btn btn-primary btn-block" onclick="loadPendingRequests_008()">بررسی درخواست‌های جدید</button>
             <div id="pendingRequests"></div>
-            
+
             <button class="btn btn-info btn-block" onclick="loadMembersMap_009()">مشاهده اعضای کاروان در نقشه</button>
             <div id="mapContainer" class="map-container">
                 <span>🌍 نقشه اعضای کاروان</span>
             </div>
             <button class="btn btn-sm btn-primary" onclick="updateMap_010()">بروز رسانی نقشه</button>
-            
+
             <hr style="margin: 15px 0;">
+
+            <!-- بخش مشاهده مسیر اعضا -->
+            <h3>🛤️ مشاهده مسیر اعضا</h3>
             
+            <div class="selection-panel">
+                <div class="form-group">
+                    <label>تعداد روزهای نمایش مسیر</label>
+                    <input type="number" id="pathDays" value="10" min="1" max="365">
+                </div>
+                <button class="btn btn-sm btn-primary btn-block" onclick="saveRetentionDays_026()">💾 ذخیره تعداد روز</button>
+                <button class="btn btn-sm btn-danger btn-block" onclick="cleanupLocations_027()">🗑️ پاکسازی مختصات قدیمی</button>
+                <small style="display:block;margin-top:8px;color:#666;font-size:11px;">
+                    مختصات قدیمی‌تر از تعداد روز تعیین‌شده، حذف خواهند شد.
+                </small>
+            </div>
+
+            <button class="btn btn-warning btn-block" onclick="loadUserCheckboxes_028()">📋 انتخاب افراد برای نمایش مسیر</button>
+            <div id="userCheckboxes" class="hidden">
+                <div class="checkbox-list" id="userCheckboxList"></div>
+                <button class="btn btn-success btn-block" onclick="showSelectedPaths_029()">🛤️ نمایش مسیر افراد انتخابی</button>
+                <button class="btn btn-sm btn-danger" onclick="clearPaths_030()">پاک کردن مسیرها</button>
+            </div>
+
+            <div id="pathMapContainer" class="map-container" style="display:none;">
+                <span>🌍 نقشه مسیر اعضا</span>
+            </div>
+            <div id="routeLegend" class="route-legend" style="display:none;"></div>
+
+            <hr style="margin: 15px 0;">
+
+            <!-- بخش مشاهده و حذف مختصات فرد -->
+            <h3>📍 مختصات یک فرد</h3>
+            <div class="form-group">
+                <label>انتخاب فرد</label>
+                <select id="userLocationsSelect">
+                    <option value="">-- انتخاب کنید --</option>
+                </select>
+            </div>
+            <button class="btn btn-info btn-block" onclick="loadUserLocations_031()">📋 نمایش مختصات فرد</button>
+            <div id="userLocationsTable" class="user-locations-table hidden"></div>
+            <button id="deleteSelectedLocationsBtn" class="btn btn-danger btn-block hidden" onclick="deleteSelectedLocations_032()">🗑️ حذف مختصات انتخاب‌شده</button>
+
+            <hr style="margin: 15px 0;">
+
             <h3>💬 چت گروهی</h3>
             <div id="chatBox" class="chat-box">
                 <p style="color:#999;text-align:center;">پیام‌ها در اینجا نمایش داده می‌شوند</p>
@@ -280,63 +402,63 @@
                 <input type="text" id="chatInput" placeholder="پیام خود را بنویسید..." style="flex:1;">
                 <button class="btn btn-warning" onclick="sendChatMessage_011()">ارسال</button>
             </div>
-            
+
             <button class="btn btn-sm btn-danger" onclick="deleteAllChatMessages_012()">حذف همه پیام‌ها</button>
-            
+
             <hr style="margin: 15px 0;">
-            
+
             <button class="btn btn-info btn-block" onclick="loadUsersManagement_013()">مدیریت کاربران</button>
             <div id="usersManagement"></div>
-            
+
             <hr style="margin: 15px 0;">
-            
+
             <button class="btn btn-danger btn-block" onclick="leaderLogout_014()">خروج</button>
         </div>
     </div>
-    
+
     <script>
         // ============================================
+        // version_3
         // متغیرهای سراسری
         // ============================================
         let currentSerial = '';
         let currentLeaderName = 'leader';
         let locationInterval = null;
-        
+
         // ============================================
         // توابع پنل رییس - شماره‌گذاری شده
         // ============================================
-        
+
         // تابع نمایش فرم ایجاد کاروان - شماره 001
         function showCreateKarvan_001() {
             document.getElementById('createKarvanSection').classList.remove('hidden');
             document.getElementById('loginSection').classList.add('hidden');
         }
         // پایان تابع showCreateKarvan_001
-        
+
         // تابع نمایش فرم ورود - شماره 002
         function showLogin_002() {
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('createKarvanSection').classList.add('hidden');
-            
-            // بارگذاری اطلاعات ذخیره شده
+
             const savedSerial = localStorage.getItem('leader_serial');
             const savedPassword = localStorage.getItem('leader_password');
             if (savedSerial) document.getElementById('leaderSerial').value = savedSerial;
             if (savedPassword) document.getElementById('leaderPassword').value = savedPassword;
         }
         // پایان تابع showLogin_002
-        
+
         // تابع ارسال درخواست ایجاد کاروان - شماره 003
         function createKarvanRequest_003() {
             const name = document.getElementById('newKarvanName').value.trim();
             const phone = document.getElementById('newKarvanPhone').value.trim();
             const messageDiv = document.getElementById('createKarvanMessage');
-            
+
             if (!name || !phone) {
                 showMessage_999(messageDiv, 'همه فیلدها را پر کنید', 'error');
                 return;
             }
-            
+
             fetch('karvan_manager.php?action=create_karvan_request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -356,158 +478,143 @@
             });
         }
         // پایان تابع createKarvanRequest_003
-        
+
         // تابع مخفی کردن فرم ایجاد کاروان - شماره 004
         function hideCreateKarvan_004() {
             document.getElementById('createKarvanSection').classList.add('hidden');
         }
         // پایان تابع hideCreateKarvan_004
-        
+
         // تابع ورود رییس - شماره 005
-// تابع ورود رییس - شماره 005
-function leaderLogin_005() {
-    const serial = document.getElementById('leaderSerial').value.trim();
-    const password = document.getElementById('leaderPassword').value.trim();
-    const messageDiv = document.getElementById('loginMessage');
-    
-    if (!serial || !password) {
-        showMessage_999(messageDiv, 'همه فیلدها را پر کنید', 'error');
-        return;
-    }
-    
-    fetch('karvan_manager.php?action=leader_login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serial: parseInt(serial), password: password })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            currentSerial = serial;
-            document.getElementById('karvanNameDisplay').textContent = data.karvan_name;
-            
-            // ذخیره اطلاعات
-            localStorage.setItem('leader_serial', serial);
-            localStorage.setItem('leader_password', password);
-            
-            document.getElementById('entrySection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            
-            // ابتدا درخواست مجوز موقعیت
-            requestLocationPermission_022();
-            
-            // بارگذاری اولیه چت
-            loadChatMessages_016();
-            // بارگذاری اولیه درخواست‌ها
-            loadPendingRequests_008();
-        } else {
-            showMessage_999(messageDiv, data.message, 'error');
+        function leaderLogin_005() {
+            const serial = document.getElementById('leaderSerial').value.trim();
+            const password = document.getElementById('leaderPassword').value.trim();
+            const messageDiv = document.getElementById('loginMessage');
+
+            if (!serial || !password) {
+                showMessage_999(messageDiv, 'همه فیلدها را پر کنید', 'error');
+                return;
+            }
+
+            fetch('karvan_manager.php?action=leader_login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial: parseInt(serial), password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentSerial = serial;
+                    document.getElementById('karvanNameDisplay').textContent = data.karvan_name;
+
+                    localStorage.setItem('leader_serial', serial);
+                    localStorage.setItem('leader_password', password);
+
+                    document.getElementById('entrySection').classList.add('hidden');
+                    document.getElementById('dashboardSection').classList.remove('hidden');
+
+                    requestLocationPermission_022();
+                    loadChatMessages_016();
+                    loadPendingRequests_008();
+                    loadRetentionDays_025();
+                } else {
+                    showMessage_999(messageDiv, data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage_999(messageDiv, 'خطا در ارتباط با سرور', 'error');
+                console.error('Error:', error);
+            });
         }
-    })
-    .catch(error => {
-        showMessage_999(messageDiv, 'خطا در ارتباط با سرور', 'error');
-        console.error('Error:', error);
-    });
-}
-// پایان تابع leaderLogin_005
         // پایان تابع leaderLogin_005
-        
+
         // تابع مخفی کردن فرم ورود - شماره 006
         function hideLogin_006() {
             document.getElementById('loginSection').classList.add('hidden');
         }
         // پایان تابع hideLogin_006
-        
+
         // تابع ارسال موقعیت لحظه‌ای - شماره 007
- // تابع ارسال موقعیت لحظه‌ای - شماره 007
-function sendLocationNow_007() {
-    const statusDiv = document.getElementById('locationStatus');
-    statusDiv.textContent = '⏳ در حال دریافت موقعیت...';
-    
-    if (!navigator.geolocation) {
-        statusDiv.textContent = '❌ مرورگر شما از موقعیت‌یابی پشتیبانی نمی‌کند';
-        return;
-    }
-    
-    // گزینه‌های موقعیت‌یابی با دقت بالا و timeout مناسب
-    const options = {
-        enableHighAccuracy: true,  // GPS را فعال می‌کند
-        timeout: 15000,            // ۱۵ ثانیه timeout
-        maximumAge: 60000          // حداکثر ۱ دقیقه کش کردن موقعیت
-    };
-    
-    navigator.geolocation.getCurrentPosition(
-        // تابع موفقیت
-        function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
-            
-            // تلاش برای ارسال موقعیت
-            sendLocationToServer_017(lat, lng, time, function(success) {
-                if (success) {
-                    statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد (GPS)';
-                    setTimeout(() => {
-                        statusDiv.textContent = '📡 موقعیت‌یابی فعال';
-                    }, 3000);
-                } else {
-                    statusDiv.textContent = '❌ خطا در ارسال موقعیت';
-                }
-            });
-        },
-        // تابع خطا
-        function(error) {
-            console.warn('GPS Error:', error);
-            
-            // اگر GPS کار نکرد، از موقعیت تقریبی (IP یا WiFi) استفاده می‌کنیم
-            statusDiv.textContent = '⏳ GPS در دسترس نیست، تلاش با روش جایگزین...';
-            
-            // استفاده از موقعیت‌یابی با دقت کمتر (از طریق WiFi/Internet)
-            const fallbackOptions = {
-                enableHighAccuracy: false,
-                timeout: 10000,
-                maximumAge: 120000
+        function sendLocationNow_007() {
+            const statusDiv = document.getElementById('locationStatus');
+            statusDiv.textContent = '⏳ در حال دریافت موقعیت...';
+
+            if (!navigator.geolocation) {
+                statusDiv.textContent = '❌ مرورگر شما از موقعیت‌یابی پشتیبانی نمی‌کند';
+                return;
+            }
+
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 60000
             };
-            
+
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
-                    
+
                     sendLocationToServer_017(lat, lng, time, function(success) {
                         if (success) {
-                            statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد (تقریبی)';
+                            statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد (GPS)';
                             setTimeout(() => {
-                                statusDiv.textContent = '📡 موقعیت‌یابی فعال (تقریبی)';
+                                statusDiv.textContent = '📡 موقعیت‌یابی فعال';
                             }, 3000);
                         } else {
                             statusDiv.textContent = '❌ خطا در ارسال موقعیت';
                         }
                     });
                 },
-                function(fallbackError) {
-                    statusDiv.textContent = '❌ خطا در دریافت موقعیت: ' + fallbackError.message;
-                    console.error('Fallback error:', fallbackError);
+                function(error) {
+                    console.warn('GPS Error:', error);
+                    statusDiv.textContent = '⏳ GPS در دسترس نیست، تلاش با روش جایگزین...';
+
+                    const fallbackOptions = {
+                        enableHighAccuracy: false,
+                        timeout: 10000,
+                        maximumAge: 120000
+                    };
+
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
+
+                            sendLocationToServer_017(lat, lng, time, function(success) {
+                                if (success) {
+                                    statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد (تقریبی)';
+                                    setTimeout(() => {
+                                        statusDiv.textContent = '📡 موقعیت‌یابی فعال (تقریبی)';
+                                    }, 3000);
+                                } else {
+                                    statusDiv.textContent = '❌ خطا در ارسال موقعیت';
+                                }
+                            });
+                        },
+                        function(fallbackError) {
+                            statusDiv.textContent = '❌ خطا در دریافت موقعیت: ' + fallbackError.message;
+                            console.error('Fallback error:', fallbackError);
+                        },
+                        fallbackOptions
+                    );
                 },
-                fallbackOptions
+                options
             );
-        },
-        options
-    );
-}
-// پایان تابع sendLocationNow_007
+        }
         // پایان تابع sendLocationNow_007
-        
+
         // تابع بارگذاری درخواست‌های جدید - شماره 008
         function loadPendingRequests_008() {
             const container = document.getElementById('pendingRequests');
-            
+
             if (!currentSerial) {
                 container.innerHTML = '<p class="message message-error">شماره سریال مشخص نیست</p>';
                 return;
             }
-            
+
             fetch(`karvan_manager.php?action=get_pending_requests&serial=${currentSerial}`)
             .then(response => response.json())
             .then(data => {
@@ -516,13 +623,12 @@ function sendLocationNow_007() {
                         container.innerHTML = '<p class="message message-info">هیچ درخواست جدیدی وجود ندارد</p>';
                         return;
                     }
-                    
+
                     let html = '';
                     data.data.forEach(req => {
-                        // استخراج نام کاربر از karvan_name
                         const parts = req.karvan_name.split(' - ');
                         const username = parts.length > 1 ? parts[1] : 'کاربر';
-                        
+
                         html += `
                             <div class="card">
                                 <h3>👤 ${username}</h3>
@@ -544,66 +650,54 @@ function sendLocationNow_007() {
             });
         }
         // پایان تابع loadPendingRequests_008
-        
+
         // تابع بارگذاری نقشه اعضا - شماره 009
-// تابع بارگذاري نقشه اعضا - شماره 009
-// ورودي: دريافت ليست موقعيت‌ها از سرور
-// خروجي: نمايش نقشه با موقعيت افراد
-let map = null;
-let mapMarkers = {};
+        let map = null;
+        let mapMarkers = {};
 
-function loadMembersMap_009() {
-    const container = document.getElementById('mapContainer');
-    
-    if (!currentSerial) {
-        container.innerHTML = '?? شماره سريال مشخص نيست';
-        return;
-    }
-    
-    // اگر نقشه وجود دارد، فقط نشانگرها را بروزرساني مي‌کنيم
-    if (map) {
-        updateMapMarkers_015();
-        return;
-    }
-    
-    // اگر نقشه وجود ندارد، ايجاد مي‌کنيم
-    container.innerHTML = '';
-    container.style.height = '400px';
-    container.style.width = '100%';
-    
-    map = L.map(container.id).setView([35.6892, 51.3890], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    
-    updateMapMarkers_015();
-}
-// پايان تابع loadMembersMap_009
-// پايان تابع loadMembersMap_009
+        function loadMembersMap_009() {
+            const container = document.getElementById('mapContainer');
 
-// تابع بروزرساني نقشه - شماره 010
-// تابع بروزرساني نقشه - شماره 010
-function updateMap_010() {
-    if (map) {
-        updateMapMarkers_015();
-    } else {
-        loadMembersMap_009();
-    }
-}
-// پايان تابع updateMap_010
-// پايان تابع updateMap_010
+            if (!currentSerial) {
+                container.innerHTML = '⚠️ شماره سریال مشخص نیست';
+                return;
+            }
 
-        
+            if (map) {
+                updateMapMarkers_015();
+                return;
+            }
 
+            container.innerHTML = '';
+            container.style.height = '400px';
+            container.style.width = '100%';
+
+            map = L.map(container.id).setView([35.6892, 51.3890], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            updateMapMarkers_015();
+        }
+        // پایان تابع loadMembersMap_009
+
+        // تابع بروزرسانی نقشه - شماره 010
+        function updateMap_010() {
+            if (map) {
+                updateMapMarkers_015();
+            } else {
+                loadMembersMap_009();
+            }
+        }
         // پایان تابع updateMap_010
-        
+
         // تابع ارسال پیام چت - شماره 011
         function sendChatMessage_011() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
-            
+
             if (!message || !currentSerial) return;
-            
+
             fetch('karvan_manager.php?action=send_chat_message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -628,12 +722,12 @@ function updateMap_010() {
             });
         }
         // پایان تابع sendChatMessage_011
-        
+
         // تابع حذف همه پیام‌ها - شماره 012
         function deleteAllChatMessages_012() {
             if (!confirm('آیا از حذف همه پیام‌ها مطمئن هستید؟')) return;
             if (!currentSerial) return;
-            
+
             fetch('karvan_manager.php?action=delete_all_messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -654,16 +748,16 @@ function updateMap_010() {
             });
         }
         // پایان تابع deleteAllChatMessages_012
-        
+
         // تابع مدیریت کاربران - شماره 013
         function loadUsersManagement_013() {
             const container = document.getElementById('usersManagement');
-            
+
             if (!currentSerial) {
                 container.innerHTML = '<p class="message message-error">شماره سریال مشخص نیست</p>';
                 return;
             }
-            
+
             fetch(`karvan_manager.php?action=get_users_list&serial=${currentSerial}`)
             .then(response => response.json())
             .then(data => {
@@ -672,16 +766,11 @@ function updateMap_010() {
                         container.innerHTML = '<p class="message message-info">هیچ کاربری در این کاروان ثبت نشده است</p>';
                         return;
                     }
-                    
+
                     let html = '<div class="table-container"><table>';
                     html += '<tr><th>نام</th><th>رمز</th><th>دسترسی</th><th>وضعیت</th><th>عملیات</th></tr>';
-                    
+
                     data.data.forEach(user => {
-                        const statusText = user.is_active == 1 ? 'فعال' : 'غیرفعال';
-                        const statusClass = user.is_active == 1 ? 'status-active' : 'status-inactive';
-                        const permText = user.chat_permission === 'read_write' ? 'خواندن و نوشتن' : 
-                                        user.chat_permission === 'read_only' ? 'فقط خواندن' : 'بدون دسترسی';
-                        
                         html += `
                             <tr>
                                 <td>${user.username}</td>
@@ -705,7 +794,7 @@ function updateMap_010() {
                             </tr>
                         `;
                     });
-                    
+
                     html += '</table></div>';
                     container.innerHTML = html;
                 } else {
@@ -718,7 +807,7 @@ function updateMap_010() {
             });
         }
         // پایان تابع loadUsersManagement_013
-        
+
         // تابع خروج از پنل رییس - شماره 014
         function leaderLogout_014() {
             if (locationInterval) {
@@ -732,126 +821,104 @@ function updateMap_010() {
             currentSerial = '';
         }
         // پایان تابع leaderLogout_014
-        
+
         // تابع شروع ردیابی موقعیت - شماره 015
-// تابع شروع ردیابی موقعیت - شماره 015
-// تابع شروع ردیابی موقعیت - شماره 015
-function startLocationTracking_015() {
-    if (locationInterval) {
-        clearInterval(locationInterval);
-        locationInterval = null;
-    }
-    
-    // بررسی اینکه مجوز داده شده است
-    if (navigator.permissions && navigator.permissions.query) {
-        navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
-            if (result.state === 'granted') {
-                // ارسال اولیه
+        function startLocationTracking_015() {
+            if (locationInterval) {
+                clearInterval(locationInterval);
+                locationInterval = null;
+            }
+
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+                    if (result.state === 'granted') {
+                        sendLocationNow_007();
+                        locationInterval = setInterval(function() {
+                            sendLocationNow_007();
+                        }, 300000);
+                    } else {
+                        requestLocationPermission_022();
+                    }
+                });
+            } else {
                 sendLocationNow_007();
-                // سپس هر ۵ دقیقه
                 locationInterval = setInterval(function() {
                     sendLocationNow_007();
-                }, 300000); // ۵ دقیقه
-            } else {
-                // اگر مجوز داده نشده، دوباره درخواست می‌کنیم
-                requestLocationPermission_022();
+                }, 300000);
             }
-        });
-    } else {
-        // مرورگر قدیمی - فرض می‌کنیم مجوز داده شده
-        sendLocationNow_007();
-        locationInterval = setInterval(function() {
-            sendLocationNow_007();
-        }, 300000);
-    }
-}
-// پایان تابع startLocationTracking_015
-// پایان تابع startLocationTracking_015
+        }
         // پایان تابع startLocationTracking_015
 
-// تابع بروزرساني نشانگرهاي نقشه - شماره 015
-function updateMapMarkers_015() {
-    if (!map) return;
-    
-    fetch(`karvan_manager.php?action=get_locations&serial=${currentSerial}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            // حذف نشانگرهاي قبلي
-            Object.values(mapMarkers).forEach(marker => {
-                map.removeLayer(marker);
+        // تابع بروزرسانی نشانگرهای نقشه - شماره 015
+        function updateMapMarkers_015() {
+            if (!map) return;
+
+            fetch(`karvan_manager.php?action=get_locations&serial=${currentSerial}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Object.values(mapMarkers).forEach(marker => {
+                        map.removeLayer(marker);
+                    });
+                    mapMarkers = {};
+
+                    if (data.data.length === 0) {
+                        return;
+                    }
+
+                    data.data.forEach(loc => {
+                        const isLeader = loc.username === 'leader';
+                        const isSelf = loc.username === currentLeaderName;
+
+                        const iconColor = isLeader ? '#FF9800' : (isSelf ? '#2196F3' : '#4CAF50');
+                        const iconText = isLeader ? '👑' : (isSelf ? '📍' : '');
+
+                        const icon = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style="background-color:${iconColor};width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;color:white;font-weight:bold;">${iconText}</div>`,
+                            iconSize: [30, 30],
+                            iconAnchor: [15, 30],
+                            popupAnchor: [0, -30]
+                        });
+
+                        const marker = L.marker([loc.latitude, loc.longitude], { icon: icon })
+                            .addTo(map)
+                            .bindPopup(`
+                                <div style="direction:rtl;text-align:right;font-family:Tahoma;">
+                                    <h4 style="margin:0 0 5px 0;color:#333;">${isLeader ? '👑 ' : ''}${loc.username} ${isSelf ? '(شما)' : ''}</h4>
+                                    <hr style="margin:5px 0;">
+                                    <p style="margin:3px 0;font-size:13px;color:#666;">
+                                        <strong>عرض:</strong> ${loc.latitude}<br>
+                                        <strong>طول:</strong> ${loc.longitude}<br>
+                                        <strong>زمان:</strong> ${loc.location_time}
+                                    </p>
+                                </div>
+                            `);
+
+                        mapMarkers[loc.username] = marker;
+                    });
+
+                    if (Object.keys(mapMarkers).length > 0) {
+                        const group = L.featureGroup(Object.values(mapMarkers));
+                        map.fitBounds(group.getBounds().pad(0.1));
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
-            mapMarkers = {};
-            
-            if (data.data.length === 0) {
-                // نمايش پيام روي نقشه
-                const emptyDiv = document.createElement('div');
-                emptyDiv.innerHTML = '?? هيچ موقعيتي ثبت نشده است';
-                emptyDiv.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;z-index:1000;';
-                // اين پيام موقتي است و با بروزرساني بعدي حذف مي‌شود
-                return;
-            }
-            
-            // ايجاد نشانگر براي هر موقعيت
-            data.data.forEach(loc => {
-                const isLeader = loc.username === 'leader';
-                const isSelf = loc.username === currentLeaderName;
-                
-                const iconColor = isLeader ? '#FF9800' : (isSelf ? '#2196F3' : '#4CAF50');
-                const iconText = isLeader ? '??' : (isSelf ? '??' : '');
-                
-                const icon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color:${iconColor};width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;color:white;font-weight:bold;">${iconText}</div>`,
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 30],
-                    popupAnchor: [0, -30]
-                });
-                
-                const marker = L.marker([loc.latitude, loc.longitude], { icon: icon })
-                    .addTo(map)
-                    .bindPopup(`
-                        <div style="direction:rtl;text-align:right;font-family:Tahoma;">
-                            <h4 style="margin:0 0 5px 0;color:#333;">${isLeader ? '?? ' : ''}${loc.username} ${isSelf ? '(شما)' : ''}</h4>
-                            <hr style="margin:5px 0;">
-                            <p style="margin:3px 0;font-size:13px;color:#666;">
-                                <strong>عرض:</strong> ${loc.latitude}<br>
-                                <strong>طول:</strong> ${loc.longitude}<br>
-                                <strong>زمان:</strong> ${loc.location_time}
-                            </p>
-                        </div>
-                    `);
-                
-                mapMarkers[loc.username] = marker;
-            });
-            
-            // تنظيم view براي نمايش همه نشانگرها
-            if (Object.keys(mapMarkers).length > 0) {
-                const group = L.featureGroup(Object.values(mapMarkers));
-                map.fitBounds(group.getBounds().pad(0.1));
-            }
-        } else {
-            // نمايش خطا روي نقشه
-            const errorDiv = document.createElement('div');
-            errorDiv.innerHTML = '?? ' + data.message;
-            errorDiv.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border-radius:10px;z-index:1000;';
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-// پايان تابع updateMapMarkers_015
-        
+        // پایان تابع updateMapMarkers_015
+
         // تابع بارگذاری پیام‌های چت - شماره 016
         function loadChatMessages_016() {
             const container = document.getElementById('chatBox');
-            
+
             if (!currentSerial) {
                 container.innerHTML = '<p style="color:#999;text-align:center;">شماره سریال مشخص نیست</p>';
                 return;
             }
-            
+
             fetch(`karvan_manager.php?action=get_chat_messages&serial=${currentSerial}`)
             .then(response => response.json())
             .then(data => {
@@ -860,7 +927,7 @@ function updateMapMarkers_015() {
                         container.innerHTML = '<p style="color:#999;text-align:center;">هنوز پیامی ارسال نشده است</p>';
                         return;
                     }
-                    
+
                     let html = '';
                     data.data.forEach(msg => {
                         const isLeader = msg.username === 'leader';
@@ -882,14 +949,14 @@ function updateMapMarkers_015() {
             });
         }
         // پایان تابع loadChatMessages_016
-        
+
         // تابع ارسال موقعیت به سرور - شماره 017
         function sendLocationToServer_017(lat, lng, time, callback) {
             if (!currentSerial) {
                 if (callback) callback(false);
                 return;
             }
-            
+
             fetch('karvan_manager.php?action=send_location', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -911,15 +978,14 @@ function updateMapMarkers_015() {
             });
         }
         // پایان تابع sendLocationToServer_017
-        
+
         // تابع تایید کاربر - شماره 018
         function approveUser_018(requestId, username, phone) {
             if (!confirm(`آیا از تایید کاربر ${username} مطمئن هستید؟`)) return;
             if (!currentSerial) return;
-            
-            // تولید رمز تصادفی
+
             const password = String(Math.floor(100000 + Math.random() * 900000));
-            
+
             fetch('karvan_manager.php?action=approve_user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -945,35 +1011,33 @@ function updateMapMarkers_015() {
             });
         }
         // پایان تابع approveUser_018
-        
+
         // تابع رد کاربر - شماره 019
         function rejectUser_019(requestId) {
             if (!confirm('آیا از رد این درخواست مطمئن هستید؟')) return;
-            // برای سادگی، فقط یک پیام نشان می‌دهیم
             alert('درخواست رد شد');
             loadPendingRequests_008();
         }
         // پایان تابع rejectUser_019
-        
+
         // تابع به‌روزرسانی فیلد کاربر - شماره 020
         function updateUserField_020(userId, field, value) {
-            // این تابع فقط برای ذخیره موقت در select استفاده می‌شود
-            // مقدار نهایی با دکمه ثبت ارسال می‌شود
+            // فقط برای ذخیره موقت
         }
         // پایان تابع updateUserField_020
-        
+
         // تابع ثبت تغییرات کاربر - شماره 021
         function updateUser_021(userId, username) {
             if (!currentSerial) return;
-            
+
             const permissionSelect = document.getElementById(`perm_${userId}`);
             const activeSelect = document.getElementById(`active_${userId}`);
-            
+
             if (!permissionSelect || !activeSelect) return;
-            
+
             const permission = permissionSelect.value;
             const isActive = parseInt(activeSelect.value);
-            
+
             fetch('karvan_manager.php?action=update_user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -999,187 +1063,605 @@ function updateMapMarkers_015() {
             });
         }
         // پایان تابع updateUser_021
-// تابع درخواست مجوز موقعیت - شماره 022
-// تابع درخواست مجوز موقعيت - شماره 022
-function requestLocationPermission_022() {
-    const statusDiv = document.getElementById('locationStatus');
-    
-    if (!navigator.geolocation) {
-        statusDiv.textContent = '? مرورگر شما از موقعيت‌يابي پشتيباني نمي‌کند';
-        return;
-    }
-    
-    // بررسي وضعيت مجوز
-    if (navigator.permissions && navigator.permissions.query) {
-        navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
-            if (result.state === 'granted') {
-                statusDiv.textContent = '? دسترسي به موقعيت داده شده است';
-                startLocationTracking_015();
-            } else if (result.state === 'prompt') {
-                statusDiv.textContent = '? درخواست دسترسي به موقعيت...';
+
+        // تابع درخواست مجوز موقعیت - شماره 022
+        function requestLocationPermission_022() {
+            const statusDiv = document.getElementById('locationStatus');
+
+            if (!navigator.geolocation) {
+                statusDiv.textContent = '❌ مرورگر شما از موقعیت‌یابی پشتیبانی نمی‌کند';
+                return;
+            }
+
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+                    if (result.state === 'granted') {
+                        statusDiv.textContent = '✅ دسترسی به موقعیت داده شده است';
+                        startLocationTracking_015();
+                    } else if (result.state === 'prompt') {
+                        statusDiv.textContent = '⏳ درخواست دسترسی به موقعیت...';
+                        askForLocation_023();
+                    } else if (result.state === 'denied') {
+                        statusDiv.innerHTML = `
+                            ⛔ دسترسی به موقعیت در مرورگر رد شده است.
+                            <br><br>
+                            <strong style="color:#d32f2f;">برای فعال کردن:</strong>
+                            <ol style="text-align:right;margin:10px 20px;font-size:13px;line-height:2;">
+                                <li>روی آدرس سایت در نوار آدرس کلیک کنید</li>
+                                <li>گزینه <strong>"Allow location access"</strong> را انتخاب کنید</li>
+                                <li>سپس روی دکمه زیر کلیک کنید</li>
+                            </ol>
+                            <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;">
+                                🔄 بروزرسانی صفحه
+                            </button>
+                        `;
+                    }
+                }).catch(function() {
+                    askForLocation_023();
+                });
+            } else {
                 askForLocation_023();
-            } else if (result.state === 'denied') {
-                // اگر مجوز قبلاً رد شده، به کاربر آموزش مي‌دهيم که چطور در مرورگر فعال کند
-                statusDiv.innerHTML = `
-                    ? دسترسي به موقعيت در مرورگر رد شده است.
-                    <br><br>
-                    <strong style="color:#d32f2f;">براي فعال کردن:</strong>
-                    <ol style="text-align:right;margin:10px 20px;font-size:13px;line-height:2;">
-                        <li>روي آدرس سايت در نوار آدرس کليک کنيد</li>
-                        <li>گزينه <strong>"Allow location access"</strong> يا <strong>"دسترسي به موقعيت"</strong> را انتخاب کنيد</li>
-                        <li>سپس روي دکمه <strong>"بروزرساني"</strong> کليک کنيد</li>
-                    </ol>
-                    <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;">
-                        ?? بروزرساني صفحه
-                    </button>
-                `;
             }
-        }).catch(function() {
-            // اگر Permission API پشتيباني نشد
-            askForLocation_023();
-        });
-    } else {
-        // مرورگر قديمي - مستقيماً درخواست مي‌کنيم
-        askForLocation_023();
-    }
-}
-// پايان تابع requestLocationPermission_022
-// پایان تابع requestLocationPermission_022
+        }
+        // پایان تابع requestLocationPermission_022
 
-// تابع درخواست موقعیت - شماره 023
-// تابع درخواست موقعيت - شماره 023
-function askForLocation_023() {
-    const statusDiv = document.getElementById('locationStatus');
-    statusDiv.textContent = '?? در حال دريافت مجوز موقعيت...';
-    
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            statusDiv.textContent = '? دسترسي به موقعيت داده شد';
+        // تابع درخواست موقعیت - شماره 023
+        function askForLocation_023() {
+            const statusDiv = document.getElementById('locationStatus');
+            statusDiv.textContent = '📍 در حال دریافت مجوز موقعیت...';
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    statusDiv.textContent = '✅ دسترسی به موقعیت داده شد';
+
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
+
+                    sendLocationToServer_017(lat, lng, time, function(success) {
+                        if (success) {
+                            statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد';
+                        } else {
+                            statusDiv.textContent = '⚠️ موقعیت دریافت شد اما در ارسال خطا رخ داد';
+                        }
+                    });
+
+                    startLocationTracking_015();
+                },
+                function(error) {
+                    console.warn('Location permission denied:', error);
+
+                    if (error.code === 1) {
+                        statusDiv.innerHTML = `
+                            ⛔ دسترسی به موقعیت رد شد.
+                            <br><br>
+                            <strong style="color:#d32f2f;">برای فعال کردن:</strong>
+                            <ol style="text-align:right;margin:10px 20px;font-size:13px;line-height:2;">
+                                <li>روی آدرس سایت در نوار آدرس کلیک کنید</li>
+                                <li>گزینه <strong>"Allow location access"</strong> را انتخاب کنید</li>
+                                <li>سپس روی دکمه زیر کلیک کنید</li>
+                            </ol>
+                            <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;">
+                                🔄 بروزرسانی صفحه
+                            </button>
+                        `;
+                    } else {
+                        statusDiv.textContent = '❌ خطا در دریافت موقعیت: ' + error.message;
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+        // پایان تابع askForLocation_023
+
+        // تابع نمایش پیام رد مجوز - شماره 024
+        function showLocationDeniedMessage_024() {
+            const statusDiv = document.getElementById('locationStatus');
+            statusDiv.innerHTML = `
+                <div style="background:#fff3cd;padding:15px;border-radius:10px;border:2px solid #ffc107;">
+                    <span style="font-size:24px;">⛔</span>
+                    <strong style="color:#856404;">دسترسی به موقعیت داده نشد</strong>
+                    <br><br>
+                    <div style="text-align:right;font-size:13px;color:#333;line-height:2;">
+                        <strong>🔧 راه حل در گوشی:</strong>
+                        <ol style="margin:5px 20px;">
+                            <li>آدرس سایت را در مرورگر باز کنید</li>
+                            <li>روی <strong>آیکون قفل 🔒</strong> یا <strong>آیکون اطلاعات ℹ️</strong> در نوار آدرس کلیک کنید</li>
+                            <li>گزینه <strong>"دسترسی به موقعیت"</strong> یا <strong>"Location"</strong> را پیدا کنید</li>
+                            <li>آن را به <strong>"Allow"</strong> یا <strong>"مجاز"</strong> تغییر دهید</li>
+                            <li>سپس روی دکمه زیر کلیک کنید</li>
+                        </ol>
+                    </div>
+                    <button class="btn btn-sm btn-success" onclick="checkLocationPermission_025()" style="margin-top:10px;padding:10px 20px;font-size:14px;">
+                        🔄 بررسی مجدد دسترسی
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;padding:10px 20px;font-size:14px;">
+                        🔄 بروزرسانی صفحه
+                    </button>
+                </div>
+            `;
+        }
+        // پایان تابع showLocationDeniedMessage_024
+
+        // تابع بررسی مجدد دسترسی موقعیت - شماره 025
+        function checkLocationPermission_025() {
+            const statusDiv = document.getElementById('locationStatus');
+            statusDiv.textContent = '⏳ در حال بررسی مجدد دسترسی...';
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    statusDiv.textContent = '✅ دسترسی به موقعیت داده شده است';
+                    startLocationTracking_015();
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
+                    sendLocationToServer_017(lat, lng, time, function(success) {
+                        if (success) {
+                            statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد';
+                        }
+                    });
+                },
+                function(error) {
+                    console.warn('Geolocation error:', error);
+
+                    if (error.code === 1) {
+                        statusDiv.innerHTML = `
+                            ⛔ دسترسی به موقعیت داده نشد.
+                            <br>
+                            <span style="font-size:13px;color:#666;">
+                                لطفاً از تنظیمات مرورگر دسترسی را فعال کنید، سپس 
+                                <strong>صفحه را ببندید و دوباره باز کنید</strong>.
+                            </span>
+                            <br><br>
+                            <button class="btn btn-sm btn-primary" onclick="location.href=location.href" style="margin-top:5px;padding:8px 20px;">
+                                🔄 باز کردن مجدد صفحه
+                            </button>
+                        `;
+                    } else {
+                        statusDiv.textContent = '❌ خطا در دریافت موقعیت: ' + error.message;
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+        // پایان تابع checkLocationPermission_025
+
+        // ============================================
+        // توابع جدید برای مشاهده مسیر
+        // ============================================
+
+        // تابع بارگذاری تعداد روز نگهداری - شماره 025 (جدید)
+        function loadRetentionDays_025() {
+            if (!currentSerial) return;
             
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
+            fetch(`karvan_manager.php?action=get_retention_days&serial=${currentSerial}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('pathDays').value = data.days;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        // پایان تابع loadRetentionDays_025
+
+        // تابع ذخیره تعداد روز نگهداری - شماره 026
+        function saveRetentionDays_026() {
+            if (!currentSerial) return;
             
-            sendLocationToServer_017(lat, lng, time, function(success) {
-                if (success) {
-                    statusDiv.textContent = '? موقعيت با موفقيت ارسال شد';
+            const days = parseInt(document.getElementById('pathDays').value);
+            if (!days || days < 1) {
+                alert('تعداد روز باید حداقل ۱ باشد');
+                return;
+            }
+            
+            fetch('karvan_manager.php?action=set_retention_days', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial: parseInt(currentSerial), days: days })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(`✅ تعداد روز نگهداری به ${days} روز تغییر کرد`);
                 } else {
-                    statusDiv.textContent = '?? موقعيت دريافت شد اما در ارسال خطا رخ داد';
+                    alert('خطا: ' + data.message);
                 }
+            })
+            .catch(error => {
+                alert('خطا در ارتباط با سرور');
+                console.error('Error:', error);
             });
-            
-            startLocationTracking_015();
-        },
-        function(error) {
-            console.warn('Location permission denied:', error);
-            
-            // اگر کاربر مجوز را رد کرد، پيام راهنما نمايش بده
-            if (error.code === 1) { // PERMISSION_DENIED
-                statusDiv.innerHTML = `
-                    ? دسترسي به موقعيت رد شد.
-                    <br><br>
-                    <strong style="color:#d32f2f;">براي فعال کردن:</strong>
-                    <ol style="text-align:right;margin:10px 20px;font-size:13px;line-height:2;">
-                        <li>روي آدرس سايت در نوار آدرس کليک کنيد</li>
-                        <li>گزينه <strong>"Allow location access"</strong> را انتخاب کنيد</li>
-                        <li>سپس روي دکمه زير کليک کنيد</li>
-                    </ol>
-                    <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;">
-                        ?? بروزرساني صفحه
-                    </button>
-                `;
-            } else {
-                statusDiv.textContent = '? خطا در دريافت موقعيت: ' + error.message;
-            }
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
-}
-// پايان تابع askForLocation_023
-// پایان تابع askForLocation_023
+        }
+        // پایان تابع saveRetentionDays_026
 
-// تابع نمایش پیام رد مجوز - شماره 024
-// تابع نمايش پيام رد مجوز - شماره 024
-function showLocationDeniedMessage_024() {
-    const statusDiv = document.getElementById('locationStatus');
-    statusDiv.innerHTML = `
-        <div style="background:#fff3cd;padding:15px;border-radius:10px;border:2px solid #ffc107;">
-            <span style="font-size:24px;">?</span>
-            <strong style="color:#856404;">دسترسي به موقعيت داده نشد</strong>
-            <br><br>
-            <div style="text-align:right;font-size:13px;color:#333;line-height:2;">
-                <strong>?? راه حل در گوشي:</strong>
-                <ol style="margin:5px 20px;">
-                    <li>آدرس سايت را در مرورگر باز کنيد</li>
-                    <li>روي <strong>آيکون قفل ??</strong> يا <strong>آيکون اطلاعات ??</strong> در نوار آدرس کليک کنيد</li>
-                    <li>گزينه <strong>"دسترسي به موقعيت"</strong> يا <strong>"Location"</strong> را پيدا کنيد</li>
-                    <li>آن را به <strong>"Allow"</strong> يا <strong>"مجاز"</strong> تغيير دهيد</li>
-                    <li>سپس روي دکمه زير کليک کنيد</li>
-                </ol>
-            </div>
-            <button class="btn btn-sm btn-success" onclick="checkLocationPermission_025()" style="margin-top:10px;padding:10px 20px;font-size:14px;">
-                ?? بررسي مجدد دسترسي
-            </button>
-            <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;padding:10px 20px;font-size:14px;">
-                ?? بروزرساني صفحه
-            </button>
-        </div>
-    `;
-}
-// پايان تابع showLocationDeniedMessage_024
-// پایان تابع showLocationDeniedMessage_024
-// تابع بررسی مجدد دسترسی موقعیت - شماره 025
-// تابع بررسي مجدد دسترسي موقعيت - شماره 025
-function checkLocationPermission_025() {
-    const statusDiv = document.getElementById('locationStatus');
-    statusDiv.textContent = '? در حال بررسي مجدد دسترسي...';
-    
-    // 1. ابتدا يک کوئري مستقيم به Geolocation API بزنيم
-    // اين کار باعث مي‌شود مرورگر وضعيت مجوز را دوباره بررسي کند
-    navigator.geolocation.getCurrentPosition(
-        // اگر موفق شد، يعني دسترسي داده شده
-        function(position) {
-            statusDiv.textContent = '? دسترسي به موقعيت داده شده است';
-            // شروع رديابي
-            startLocationTracking_015();
-            // ارسال موقعيت فعلي
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
-            sendLocationToServer_017(lat, lng, time, function(success) {
-                if (success) {
-                    statusDiv.textContent = '? موقعيت با موفقيت ارسال شد';
-                }
-            });
-        },
-        // اگر خطا داد، بررسي کنيم که چه خطايي است
-        function(error) {
-            console.warn('Geolocation error:', error);
+        // تابع پاکسازی مختصات قدیمی - شماره 027
+        function cleanupLocations_027() {
+            if (!currentSerial) return;
             
-            // اگر خطا به خاطر اين است که مجوز داده نشده
-            if (error.code === 1) { // PERMISSION_DENIED
-                statusDiv.innerHTML = `
-                    ? دسترسي به موقعيت داده نشد.
-                    <br>
-                    <span style="font-size:13px;color:#666;">
-                        لطفاً از تنظيمات مرورگر دسترسي را فعال کنيد، سپس 
-                        <strong>صفحه را ببنديد و دوباره باز کنيد</strong>.
-                    </span>
-                    <br><br>
-                    <button class="btn btn-sm btn-primary" onclick="location.href=location.href" style="margin-top:5px;padding:8px 20px;">
-                        ?? باز کردن مجدد صفحه
-                    </button>
-                `;
-            } else {
-                statusDiv.textContent = '? خطا در دريافت موقعيت: ' + error.message;
+            if (!confirm('آیا از پاکسازی مختصات قدیمی مطمئن هستید؟')) return;
+            
+            fetch('karvan_manager.php?action=cleanup_locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial: parseInt(currentSerial) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(`✅ ${data.message}\nتعداد روز: ${data.days}\nتاریخ قطع: ${data.cutoff}`);
+                } else {
+                    alert('خطا: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('خطا در ارتباط با سرور');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع cleanupLocations_027
+
+        // تابع بارگذاری لیست کاربران برای انتخاب مسیر - شماره 028
+        function loadUserCheckboxes_028() {
+            const container = document.getElementById('userCheckboxes');
+            const listContainer = document.getElementById('userCheckboxList');
+            
+            if (!currentSerial) {
+                alert('شماره سریال مشخص نیست');
+                return;
             }
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
-}
-// پايان تابع checkLocationPermission_025
-// پایان تابع checkLocationPermission_025
+            
+            fetch(`karvan_manager.php?action=get_users_list&serial=${currentSerial}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let html = '';
+                    
+                    // اضافه کردن رییس کاروان
+                    html += `
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="user_leader" value="leader">
+                            <label for="user_leader">👑 رییس کاروان (leader)</label>
+                        </div>
+                    `;
+                    
+                    // اضافه کردن سایر کاربران
+                    data.data.forEach(user => {
+                        html += `
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="user_${user.id}" value="${user.username}">
+                                <label for="user_${user.id}">👤 ${user.username}</label>
+                            </div>
+                        `;
+                    });
+                    
+                    listContainer.innerHTML = html || '<p style="text-align:center;color:#999;">هیچ کاربری وجود ندارد</p>';
+                    container.classList.remove('hidden');
+                } else {
+                    alert('خطا: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('خطا در ارتباط با سرور');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع loadUserCheckboxes_028
+
+        // تابع نمایش مسیر افراد انتخاب‌شده - شماره 029
+        let pathMap = null;
+        let pathLayers = [];
         
+        function showSelectedPaths_029() {
+            const checkboxes = document.querySelectorAll('#userCheckboxList input[type="checkbox"]:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('لطفاً حداقل یک نفر را انتخاب کنید');
+                return;
+            }
+            
+            const usernames = Array.from(checkboxes).map(cb => cb.value);
+            const days = parseInt(document.getElementById('pathDays').value) || 10;
+            
+            fetch(`karvan_manager.php?action=get_path&serial=${currentSerial}&usernames=${encodeURIComponent(usernames.join(','))}&days=${days}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const pathContainer = document.getElementById('pathMapContainer');
+                    pathContainer.style.display = 'block';
+                    pathContainer.innerHTML = '';
+                    
+                    if (!pathMap) {
+                        pathMap = L.map(pathContainer.id).setView([35.6892, 51.3890], 10);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors'
+                        }).addTo(pathMap);
+                    }
+                    
+                    // پاک کردن لایه‌های قبلی
+                    pathLayers.forEach(layer => pathMap.removeLayer(layer));
+                    pathLayers = [];
+                    
+                    const colors = ['#FF9800', '#2196F3', '#4CAF50', '#f44336', '#9C27B0', '#00BCD4', '#FF5722', '#795548', '#607D8B', '#E91E63'];
+                    const legendItems = [];
+                    let colorIndex = 0;
+                    
+                    const allPoints = [];
+                    
+                    for (const username in data.data) {
+                        const points = data.data[username];
+                        if (points.length === 0) continue;
+                        
+                        const color = colors[colorIndex % colors.length];
+                        colorIndex++;
+                        
+                        legendItems.push({ username: username, color: color });
+                        
+                        // ایجاد خط مسیر
+                        const latlngs = points.map(p => [parseFloat(p.latitude), parseFloat(p.longitude)]);
+                        allPoints.push(...latlngs);
+                        
+                        const polyline = L.polyline(latlngs, {
+                            color: color,
+                            weight: 4,
+                            opacity: 0.7
+                        }).addTo(pathMap);
+                        pathLayers.push(polyline);
+                        
+                        // ایجاد نشانگر برای هر نقطه
+                        points.forEach((point, idx) => {
+                            const marker = L.circleMarker([parseFloat(point.latitude), parseFloat(point.longitude)], {
+                                radius: 5,
+                                fillColor: color,
+                                color: 'white',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.9
+                            }).addTo(pathMap);
+                            
+                            marker.bindPopup(`
+                                <div style="direction:rtl;text-align:right;font-family:Tahoma;">
+                                    <h4 style="margin:0 0 5px 0;color:#333;">${username}</h4>
+                                    <hr style="margin:5px 0;">
+                                    <p style="margin:3px 0;font-size:13px;color:#666;">
+                                        <strong>عرض:</strong> ${point.latitude}<br>
+                                        <strong>طول:</strong> ${point.longitude}<br>
+                                        <strong>زمان:</strong> ${point.location_time}
+                                    </p>
+                                </div>
+                            `);
+                            pathLayers.push(marker);
+                            
+                            // محاسبه و نمایش سرعت بین دو نقطه
+                            if (idx > 0) {
+                                const prevPoint = points[idx - 1];
+                                const speed = calculateSpeed_033(
+                                    parseFloat(prevPoint.latitude),
+                                    parseFloat(prevPoint.longitude),
+                                    parseFloat(point.latitude),
+                                    parseFloat(point.longitude),
+                                    prevPoint.location_time,
+                                    point.location_time
+                                );
+                                
+                                if (speed !== null && speed > 0) {
+                                    const midLat = (parseFloat(prevPoint.latitude) + parseFloat(point.latitude)) / 2;
+                                    const midLng = (parseFloat(prevPoint.longitude) + parseFloat(point.longitude)) / 2;
+                                    
+                                    const speedMarker = L.marker([midLat, midLng], {
+                                        icon: L.divIcon({
+                                            className: 'speed-label-icon',
+                                            html: `<div class="speed-label">${speed.toFixed(1)} km/h</div>`,
+                                            iconSize: [80, 20],
+                                            iconAnchor: [40, 10]
+                                        })
+                                    }).addTo(pathMap);
+                                    
+                                    speedMarker.bindPopup(`
+                                        <div style="direction:rtl;text-align:right;font-family:Tahoma;">
+                                            <strong>سرعت:</strong> ${speed.toFixed(2)} کیلومتر بر ساعت<br>
+                                            <strong>از:</strong> ${prevPoint.location_time}<br>
+                                            <strong>تا:</strong> ${point.location_time}
+                                        </div>
+                                    `);
+                                    
+                                    pathLayers.push(speedMarker);
+                                }
+                            }
+                        });
+                    }
+                    
+                    // تنظیم view
+                    if (allPoints.length > 0) {
+                        pathMap.fitBounds(L.latLngBounds(allPoints).pad(0.1));
+                    }
+                    
+                    // نمایش راهنما
+                    const legendContainer = document.getElementById('routeLegend');
+                    let legendHtml = '';
+                    legendItems.forEach(item => {
+                        const displayName = item.username === 'leader' ? '👑 رییس کاروان' : '👤 ' + item.username;
+                        legendHtml += `
+                            <div class="legend-item">
+                                <div class="legend-color" style="background:${item.color};"></div>
+                                <span>${displayName}</span>
+                            </div>
+                        `;
+                    });
+                    legendContainer.innerHTML = legendHtml;
+                    legendContainer.style.display = 'flex';
+                    
+                    // اسکرول به نقشه
+                    pathContainer.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('خطا: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('خطا در ارتباط با سرور');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع showSelectedPaths_029
+
+        // تابع پاک کردن مسیرها - شماره 030
+        function clearPaths_030() {
+            pathLayers.forEach(layer => pathMap.removeLayer(layer));
+            pathLayers = [];
+            document.getElementById('pathMapContainer').style.display = 'none';
+            document.getElementById('routeLegend').style.display = 'none';
+        }
+        // پایان تابع clearPaths_030
+
+        // تابع بارگذاری مختصات یک فرد - شماره 031
+        function loadUserLocations_031() {
+            const select = document.getElementById('userLocationsSelect');
+            const username = select.value;
+            
+            if (!username) {
+                alert('لطفاً یک فرد انتخاب کنید');
+                return;
+            }
+            
+            fetch(`karvan_manager.php?action=get_user_locations&serial=${currentSerial}&username=${encodeURIComponent(username)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const container = document.getElementById('userLocationsTable');
+                    
+                    if (data.data.length === 0) {
+                        container.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">هیچ مختصاتی برای این فرد ثبت نشده است</p>';
+                        container.classList.remove('hidden');
+                        document.getElementById('deleteSelectedLocationsBtn').classList.add('hidden');
+                        return;
+                    }
+                    
+                    let html = '<table>';
+                    html += '<tr><th><input type="checkbox" id="selectAllLocations" onchange="toggleAllLocations_034(this)"></th><th>#</th><th>عرض</th><th>طول</th><th>زمان</th></tr>';
+                    
+                    data.data.forEach((loc, idx) => {
+                        html += `
+                            <tr>
+                                <td><input type="checkbox" class="location-checkbox" value="${loc.id}"></td>
+                                <td>${idx + 1}</td>
+                                <td>${loc.latitude}</td>
+                                <td>${loc.longitude}</td>
+                                <td style="font-size:11px;">${loc.location_time}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</table>';
+                    container.innerHTML = html;
+                    container.classList.remove('hidden');
+                    document.getElementById('deleteSelectedLocationsBtn').classList.remove('hidden');
+                } else {
+                    alert('خطا: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('خطا در ارتباط با سرور');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع loadUserLocations_031
+
+        // تابع حذف مختصات انتخاب‌شده - شماره 032
+        function deleteSelectedLocations_032() {
+            const checkboxes = document.querySelectorAll('.location-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('لطفاً حداقل یک مختصات را انتخاب کنید');
+                return;
+            }
+            
+            if (!confirm(`آیا از حذف ${checkboxes.length} مختصات مطمئن هستید؟`)) return;
+            
+            const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            const username = document.getElementById('userLocationsSelect').value;
+            
+            fetch('karvan_manager.php?action=delete_user_locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    serial: parseInt(currentSerial),
+                    username: username,
+                    location_ids: ids
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(`✅ ${data.message}`);
+                    loadUserLocations_031();
+                } else {
+                    alert('خطا: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('خطا در ارتباط با سرور');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع deleteSelectedLocations_032
+
+        // تابع محاسبه سرعت بین دو نقطه - شماره 033
+        function calculateSpeed_033(lat1, lon1, lat2, lon2, time1, time2) {
+            try {
+                // محاسبه فاصله با فرمول هاورساین
+                const R = 6371; // شعاع زمین به کیلومتر
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const distance = R * c;
+                
+                // محاسبه زمان به ساعت
+                const t1 = new Date(time1.replace(' ', 'T')).getTime();
+                const t2 = new Date(time2.replace(' ', 'T')).getTime();
+                const timeDiffHours = Math.abs(t2 - t1) / (1000 * 60 * 60);
+                
+                if (timeDiffHours < 0.001) return null;
+                
+                const speed = distance / timeDiffHours;
+                return speed;
+            } catch (e) {
+                return null;
+            }
+        }
+        // پایان تابع calculateSpeed_033
+
+        // تابع انتخاب/لغو همه مختصات - شماره 034
+        function toggleAllLocations_034(checkbox) {
+            const checkboxes = document.querySelectorAll('.location-checkbox');
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+        }
+        // پایان تابع toggleAllLocations_034
+
+        // تابع پر کردن لیست انتخاب فرد - شماره 035
+        function populateUserLocationsSelect_035() {
+            const select = document.getElementById('userLocationsSelect');
+            
+            if (!currentSerial) return;
+            
+            fetch(`karvan_manager.php?action=get_users_list&serial=${currentSerial}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    select.innerHTML = '<option value="">-- انتخاب کنید --</option>';
+                    select.innerHTML += '<option value="leader">👑 رییس کاروان (leader)</option>';
+                    
+                    data.data.forEach(user => {
+                        select.innerHTML += `<option value="${user.username}">👤 ${user.username}</option>`;
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        // پایان تابع populateUserLocationsSelect_035
+
         // تابع نمایش پیام - شماره 999
         function showMessage_999(element, message, type) {
             element.textContent = message;
@@ -1190,10 +1672,9 @@ function checkLocationPermission_025() {
             }, 5000);
         }
         // پایان تابع showMessage_999
-        
+
         // بارگذاری اولیه
         document.addEventListener('DOMContentLoaded', function() {
-            // بررسی ذخیره شده‌ها
             const savedSerial = localStorage.getItem('leader_serial');
             if (savedSerial) {
                 document.getElementById('leaderSerial').value = savedSerial;
