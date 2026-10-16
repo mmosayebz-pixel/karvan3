@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <title>پنل مدیریت کاروان</title>
+    <style>
+        /* استایل‌های مشابه index.html با کمی تغییرات */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tahoma', 'Arial', sans-serif;
+        }
+        body {
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d32f2f;
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            margin: 5px 0;
+        }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-block { width: 100%; }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-right: 4px solid #2196F3;
+        }
+        .card h3 {
+            font-size: 16px;
+            color: #333;
+        }
+        .card p {
+            font-size: 13px;
+            color: #666;
+            margin: 5px 0;
+        }
+        .hidden {
+            display: none;
+        }
+        #loginSection, #dashboardSection {
+            transition: all 0.3s ease;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-active { background: #4CAF50; color: white; }
+        .status-inactive { background: #f44336; color: white; }
+        .message {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .message-success { background: #d4edda; color: #155724; }
+        .message-error { background: #f8d7da; color: #721c24; }
+        .table-container {
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: #2196F3;
+            color: white;
+            padding: 10px;
+            text-align: right;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+    </style>
+
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+
+</head>
+<body>
+<script>alert('ver_4');</script>
+
+    <div class="container">
+        <!-- بخش ورود -->
+        <div id="loginSection">
+            <h1>🔐 ورود مدیر</h1>
+            <div class="form-group">
+                <label>رمز عبور مدیر</label>
+                <input type="password" id="managerPassword" placeholder="رمز عبور را وارد کنید">
+            </div>
+            <button class="btn btn-danger btn-block" onclick="managerLogin_001()">ورود</button>
+            <div id="loginMessage" class="message hidden"></div>
+        </div>
+        
+        <!-- بخش داشبورد -->
+        <div id="dashboardSection" class="hidden">
+            <h1>📊 پنل مدیریت</h1>
+            
+            <!-- دکمه تغییر رمز -->
+            <button class="btn btn-warning btn-block" onclick="showChangePassword_002()">تغییر رمز عبور</button>
+            
+            <!-- بخش تغییر رمز -->
+            <div id="changePasswordSection" class="hidden">
+                <div class="form-group">
+                    <label>رمز فعلی</label>
+                    <input type="password" id="currentPassword">
+                </div>
+                <div class="form-group">
+                    <label>رمز جدید</label>
+                    <input type="password" id="newPassword">
+                </div>
+                <button class="btn btn-primary btn-block" onclick="changePassword_003()">تغییر رمز</button>
+                <button class="btn btn-sm" onclick="hideChangePassword_004()">لغو</button>
+            </div>
+            
+            <hr style="margin: 20px 0;">
+            
+            <!-- درخواست‌های جدید -->
+            <h3>📩 درخواست‌های ایجاد کاروان جدید</h3>
+            <div id="requestsList"></div>
+            <button class="btn btn-primary btn-block" onclick="loadRequests_005()">بروزرسانی درخواست‌ها</button>
+            
+            <hr style="margin: 20px 0;">
+            
+            <!-- مدیریت کاروان‌ها -->
+            <h3>🚐 مدیریت کاروان‌ها</h3>
+            <button class="btn btn-info btn-block" onclick="loadKarvanList_006()">مشاهده لیست کاروان‌ها</button>
+            <div id="karvanList"></div>
+            
+            <hr style="margin: 20px 0;">
+            
+            <!-- مشاهده چت کاروان -->
+            <h3>💬 مشاهده چت کاروان</h3>
+            <div class="form-group">
+                <label>انتخاب کاروان</label>
+                <select id="chatKarvanSelect" onchange="loadChatMessages_007()">
+                    <option value="">-- انتخاب کنید --</option>
+                </select>
+            </div>
+            <div id="chatMessages"></div>
+            
+            <hr style="margin: 20px 0;">
+            
+            <button class="btn btn-danger btn-block" onclick="logout_008()">خروج</button>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // توابع پنل مدیر - شماره‌گذاری شده
+        // ============================================
+        
+        // تابع ورود مدیر - شماره 001
+        // ورودی: دریافت رمز از input
+        // خروجی: ورود به پنل یا نمایش خطا
+        function managerLogin_001() {
+            const password = document.getElementById('managerPassword').value;
+            const messageDiv = document.getElementById('loginMessage');
+            
+            if (!password) {
+                showMessage_999(messageDiv, 'لطفاً رمز عبور را وارد کنید', 'error');
+                return;
+            }
+            
+            fetch('karvan_manager.php?action=manager_login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('dashboardSection').classList.remove('hidden');
+                    loadRequests_005();
+                    loadKarvanSelect_009();
+                } else {
+                    showMessage_999(messageDiv, data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage_999(messageDiv, 'خطا در ارتباط با سرور', 'error');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع managerLogin_001
+        
+        // تابع نمایش فرم تغییر رمز - شماره 002
+        function showChangePassword_002() {
+            const section = document.getElementById('changePasswordSection');
+            section.classList.toggle('hidden');
+        }
+        // پایان تابع showChangePassword_002
+        
+        // تابع تغییر رمز مدیر - شماره 003
+        function changePassword_003() {
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const messageDiv = document.getElementById('loginMessage');
+            
+            if (!current || !newPass) {
+                showMessage_999(messageDiv, 'همه فیلدها را پر کنید', 'error');
+                return;
+            }
+            
+            if (newPass.length < 6) {
+                showMessage_999(messageDiv, 'رمز جدید حداقل ۶ کاراکتر باشد', 'error');
+                return;
+            }
+            
+            fetch('karvan_manager.php?action=change_manager_password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    current_password: current, 
+                    new_password: newPass 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showMessage_999(messageDiv, data.message, data.status);
+                if (data.status === 'success') {
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                }
+            })
+            .catch(error => {
+                showMessage_999(messageDiv, 'خطا در ارتباط با سرور', 'error');
+            });
+        }
+        // پایان تابع changePassword_003
+        
+        // تابع مخفی کردن فرم تغییر رمز - شماره 004
+        function hideChangePassword_004() {
+            document.getElementById('changePasswordSection').classList.add('hidden');
+        }
+        // پایان تابع hideChangePassword_004
+        
+        // تابع بارگذاری درخواست‌ها - شماره 005
+
+// تابع بارگذاري درخواست‌ها - شماره 005
+function loadRequests_005() {
+    const container = document.getElementById('requestsList');
+    
+    fetch('karvan_manager.php?action=get_all_requests')
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const pendingRequests = data.data.filter(req => req.status === 'pending');
+            
+            if (pendingRequests.length === 0) {
+                container.innerHTML = '<p class="message message-info">هيچ درخواست جديدي وجود ندارد</p>';
+                return;
+            }
+            
+            let html = '';
+            pendingRequests.forEach(req => {
+                html += `
+                    <div class="card">
+                        <h3>?? ${req.karvan_name}</h3>
+                        <p>?? ${req.phone}</p>
+                        <p>?? ${req.created_at}</p>
+                        <button class="btn btn-sm btn-success" onclick="approveKarvan_012(${req.id}, '${req.karvan_name}', '${req.phone}')">? تاييد</button>
+                        <button class="btn btn-sm btn-danger" onclick="rejectKarvan_013(${req.id})">? رد</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `<p class="message message-error">${data.message}</p>`;
+        }
+    })
+    .catch(error => {
+        container.innerHTML = '<p class="message message-error">خطا در دريافت اطلاعات</p>';
+        console.error('Error:', error);
+    });
+}
+// پايان تابع loadRequests_005
+
+        // پایان تابع loadRequests_005
+        
+        // تابع بارگذاری لیست کاروان‌ها - شماره 006
+        function loadKarvanList_006() {
+            const container = document.getElementById('karvanList');
+            
+            fetch('karvan_manager.php?action=get_karvan_list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let html = '<div class="table-container"><table>';
+                    html += '<tr><th>نام</th><th>سریال</th><th>رمز</th><th>وضعیت</th><th>عملیات</th></tr>';
+                    
+                    data.data.forEach(karvan => {
+                        html += `
+                            <tr>
+                                <td>${karvan.name}</td>
+                                <td>${karvan.serial_number}</td>
+                                <td>${karvan.password}</td>
+                                <td><span class="status-badge ${karvan.case_status == 1 ? 'status-active' : 'status-inactive'}">${karvan.case_status == 1 ? 'فعال' : 'غیرفعال'}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="editKarvan_010(${karvan.id})">ویرایش</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</table></div>';
+                    container.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                container.innerHTML = '<p class="message message-error">خطا در دریافت اطلاعات</p>';
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع loadKarvanList_006
+        
+        // تابع بارگذاری پیام‌های چت - شماره 007
+        function loadChatMessages_007() {
+            const select = document.getElementById('chatKarvanSelect');
+            const container = document.getElementById('chatMessages');
+            const serial = select.value;
+            
+            if (!serial) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            fetch(`karvan_manager.php?action=get_karvan_messages&serial=${serial}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let html = '<div class="table-container"><table>';
+                    html += '<tr><th>کاربر</th><th>پیام</th><th>زمان</th><th>عملیات</th></tr>';
+                    
+                    data.data.forEach(msg => {
+                        html += `
+                            <tr>
+                                <td>${msg.username}</td>
+                                <td>${msg.message}</td>
+                                <td>${msg.created_at}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteMessage_011(${serial}, ${msg.id})">حذف</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</table></div>';
+                    container.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                container.innerHTML = '<p class="message message-error">خطا در دریافت پیام‌ها</p>';
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع loadChatMessages_007
+        
+        // تابع خروج - شماره 008
+        function logout_008() {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('managerPassword').value = '';
+        }
+        // پایان تابع logout_008
+        
+        // تابع بارگذاری انتخاب کاروان برای چت - شماره 009
+        function loadKarvanSelect_009() {
+            const select = document.getElementById('chatKarvanSelect');
+            
+            fetch('karvan_manager.php?action=get_karvan_list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    select.innerHTML = '<option value="">-- انتخاب کنید --</option>';
+                    data.data.forEach(karvan => {
+                        select.innerHTML += `<option value="${karvan.serial_number}">${karvan.name} (${karvan.serial_number})</option>`;
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        // پایان تابع loadKarvanSelect_009
+        
+        // تابع ویرایش کاروان - شماره 010
+        function editKarvan_010(id) {
+            // برای سادگی، یک alert نشان می‌دهیم
+            alert('ویرایش کاروان با ID: ' + id + '\nاین بخش نیاز به پیاده‌سازی کامل دارد');
+        }
+        // پایان تابع editKarvan_010
+        
+        // تابع حذف پیام - شماره 011
+        function deleteMessage_011(serial, messageId) {
+            if (!confirm('آیا از حذف این پیام مطمئن هستید؟')) return;
+            
+            fetch('karvan_manager.php?action=delete_message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial: serial, message_id: messageId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('پیام با موفقیت حذف شد');
+                    loadChatMessages_007();
+                } else {
+                    alert('خطا در حذف پیام: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('خطا در ارتباط با سرور');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع deleteMessage_011
+        
+        // تابع نمایش پیام - شماره 999
+        function showMessage_999(element, message, type) {
+            element.textContent = message;
+            element.className = 'message message-' + type;
+            element.classList.remove('hidden');
+            setTimeout(() => {
+                element.classList.add('hidden');
+            }, 5000);
+        }
+        // پایان تابع showMessage_999
+
+
+// تابع تایید درخواست کاروان - شماره 012
+function approveKarvan_012(requestId, karvanName, phone) {
+    if (!confirm(`آیا از تایید کاروان "${karvanName}" مطمئن هستید؟`)) return;
+    
+    fetch('karvan_manager.php?action=approve_karvan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            request_id: requestId,
+            karvan_name: karvanName,
+            phone: phone
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(`✅ کاروان "${karvanName}" با شماره سریال ${data.serial} و رمز ${data.password} ایجاد شد`);
+            loadRequests_005();
+        } else {
+            alert('❌ خطا: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('❌ خطا در ارتباط با سرور');
+        console.error('Error:', error);
+    });
+}
+// پایان تابع approveKarvan_012
+
+// تابع رد درخواست کاروان - شماره 013
+function rejectKarvan_013(requestId) {
+    if (!confirm('آیا از رد این درخواست مطمئن هستید؟')) return;
+    alert('درخواست رد شد');
+    loadRequests_005();
+}
+// پایان تابع rejectKarvan_013
+
+
+    </script>
+</body>
+</html>

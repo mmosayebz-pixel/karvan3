@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <title>پنل کاربر کاروان</title>
+    <style>
+        /* استایل‌های مشابه با تغییرات رنگ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tahoma', 'Arial', sans-serif;
+        }
+        body {
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2196F3;
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h3 {
+            color: #333;
+            margin: 15px 0 10px;
+            font-size: 16px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            margin: 5px 0;
+        }
+        .btn-info { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-primary { background: #00BCD4; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-block { width: 100%; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-right: 4px solid #2196F3;
+        }
+        .hidden { display: none; }
+        .message {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .message-success { background: #d4edda; color: #155724; }
+        .message-error { background: #f8d7da; color: #721c24; }
+        .message-info { background: #d1ecf1; color: #0c5460; }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-active { background: #4CAF50; color: white; }
+        .status-inactive { background: #f44336; color: white; }
+        .map-container {
+            width: 100%;
+            height: 400px;
+            background: #e9ecef;
+            border-radius: 12px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .chat-box {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .chat-message {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 10px;
+            background: #f1f1f1;
+        }
+        .chat-message.self {
+            background: #2196F3;
+            color: white;
+        }
+        .chat-message .user {
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .chat-message .time {
+            font-size: 10px;
+            color: #999;
+            float: left;
+        }
+        .chat-message.self .time {
+            color: rgba(255,255,255,0.7);
+        }
+        .location-status {
+            padding: 8px;
+            border-radius: 8px;
+            background: #e9ecef;
+            text-align: center;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        .username-display {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2196F3;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+    /* ===== استایل‌های جدید برای نقشه ===== */
+    .custom-div-icon {
+        background: transparent;
+        border: none;
+    }
+    .leaflet-popup-content {
+        min-width: 200px;
+    }
+    #mapContainer {
+        width: 100%;
+        height: 400px;
+        background: #e9ecef;
+        border-radius: 12px;
+        margin: 10px 0;
+    }
+    /* ===== پایان استایل‌های نقشه ===== */
+
+    </style>
+
+    <!-- کدهای قبلی -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- کدهای قبلی -->
+
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+</head>
+<body>
+<script>alert('ver_6');</script>
+
+    <div class="container">
+        <!-- بخش انتخاب ورود -->
+        <div id="entrySection">
+            <h1>👤 پنل کاربر</h1>
+            
+            <button class="btn btn-success btn-block" onclick="showRegister_001()">ثبت‌نام در کاروان</button>
+            <button class="btn btn-info btn-block" onclick="showLogin_002()">ورود به کاروان</button>
+            
+            <!-- فرم ثبت‌نام -->
+            <div id="registerSection" class="hidden">
+                <h3>📝 ثبت‌نام در کاروان</h3>
+                <div class="form-group">
+                    <label>شماره سریال کاروان</label>
+                    <input type="number" id="registerSerial" placeholder="شماره سریال را وارد کنید">
+                </div>
+                <div class="form-group">
+                    <label>نام و نام خانوادگی</label>
+                    <input type="text" id="registerName" placeholder="نام خود را وارد کنید">
+                </div>
+                <div class="form-group">
+                    <label>شماره تماس</label>
+                    <input type="text" id="registerPhone" placeholder="شماره تماس را وارد کنید">
+                </div>
+                <button class="btn btn-success btn-block" onclick="userRegister_003()">ارسال درخواست</button>
+                <button class="btn btn-sm" onclick="hideRegister_004()">لغو</button>
+                <div id="registerMessage" class="message hidden"></div>
+            </div>
+            
+            <!-- فرم ورود -->
+            <div id="loginSection" class="hidden">
+                <h3>🔐 ورود به کاروان</h3>
+                <div class="form-group">
+                    <label>شماره سریال کاروان</label>
+                    <input type="number" id="userSerial" placeholder="شماره سریال را وارد کنید">
+                </div>
+                <div class="form-group">
+                    <label>نام کاربری</label>
+                    <input type="text" id="userUsername" placeholder="نام کاربری را وارد کنید">
+                </div>
+                <div class="form-group">
+                    <label>رمز عبور</label>
+                    <input type="password" id="userPassword" placeholder="رمز عبور را وارد کنید">
+                </div>
+                <button class="btn btn-info btn-block" onclick="userLogin_005()">ورود</button>
+                <button class="btn btn-sm" onclick="hideLogin_006()">لغو</button>
+                <div id="loginMessage" class="message hidden"></div>
+            </div>
+        </div>
+        
+        <!-- بخش داشبورد کاربر -->
+        <div id="dashboardSection" class="hidden">
+            <div class="username-display" id="userNameDisplay">👤 کاربر</div>
+            
+            <div class="location-status">
+                <span id="locationStatus">⏳ در حال دریافت موقعیت...</span>
+                <button class="btn btn-sm btn-primary" onclick="sendLocationNow_007()">ارسال موقعیت لحظه‌ای</button>
+            </div>
+            
+            <button class="btn btn-primary btn-block" onclick="loadGroupMap_008()">بروز رسانی نقشه گروهی</button>
+            <div id="mapContainer" class="map-container">
+                <span>🌍 نقشه اعضای کاروان</span>
+            </div>
+            
+            <hr style="margin: 15px 0;">
+            
+            <!-- بخش چت - فقط در صورت داشتن دسترسی نمایش داده می‌شود -->
+            <div id="chatSection">
+                <h3>💬 چت گروهی</h3>
+                <div id="chatBox" class="chat-box">
+                    <p style="color:#999;text-align:center;">پیام‌ها در اینجا نمایش داده می‌شوند</p>
+                </div>
+                <div class="form-group" style="display:flex;gap:10px;">
+                    <input type="text" id="chatInput" placeholder="پیام خود را بنویسید..." style="flex:1;">
+                    <button class="btn btn-info" onclick="sendChatMessage_009()">ارسال</button>
+                </div>
+            </div>
+            
+            <hr style="margin: 15px 0;">
+            
+            <button class="btn btn-danger btn-block" onclick="userLogout_010()">خروج</button>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // متغیرهای سراسری
+        // ============================================
+        let currentSerial = '';
+        let currentUsername = '';
+        let currentChatPermission = 'read_write';
+        let locationInterval = null;
+        let chatInterval = null;
+        
+        // ============================================
+        // توابع پنل کاربر - شماره‌گذاری شده
+        // ============================================
+        
+        // تابع نمایش فرم ثبت‌نام - شماره 001
+        function showRegister_001() {
+            document.getElementById('registerSection').classList.remove('hidden');
+            document.getElementById('loginSection').classList.add('hidden');
+            
+            // بارگذاری اطلاعات ذخیره شده
+            const savedSerial = localStorage.getItem('user_serial');
+            const savedName = localStorage.getItem('user_name');
+            if (savedSerial) document.getElementById('registerSerial').value = savedSerial;
+            if (savedName) document.getElementById('registerName').value = savedName;
+        }
+        // پایان تابع showRegister_001
+        
+        // تابع نمایش فرم ورود - شماره 002
+        function showLogin_002() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+            
+            // بارگذاری اطلاعات ذخیره شده
+            const savedSerial = localStorage.getItem('user_serial');
+            const savedUsername = localStorage.getItem('user_username');
+            const savedPassword = localStorage.getItem('user_password');
+            if (savedSerial) document.getElementById('userSerial').value = savedSerial;
+            if (savedUsername) document.getElementById('userUsername').value = savedUsername;
+            if (savedPassword) document.getElementById('userPassword').value = savedPassword;
+        }
+        // پایان تابع showLogin_002
+        
+        // تابع ثبت‌نام کاربر - شماره 003
+        function userRegister_003() {
+            const serial = document.getElementById('registerSerial').value.trim();
+            const name = document.getElementById('registerName').value.trim();
+            const phone = document.getElementById('registerPhone').value.trim();
+            const messageDiv = document.getElementById('registerMessage');
+            
+            if (!serial || !name || !phone) {
+                showMessage_999(messageDiv, 'همه فیلدها را پر کنید', 'error');
+                return;
+            }
+            
+            fetch('karvan_manager.php?action=user_register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    serial: parseInt(serial),
+                    username: name,
+                    phone: phone
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showMessage_999(messageDiv, data.message, data.status);
+                if (data.status === 'success') {
+                    // ذخیره سریال برای استفاده بعدی
+                    localStorage.setItem('user_serial', serial);
+                    localStorage.setItem('user_name', name);
+                }
+            })
+            .catch(error => {
+                showMessage_999(messageDiv, 'خطا در ارتباط با سرور', 'error');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع userRegister_003
+        
+        // تابع مخفی کردن فرم ثبت‌نام - شماره 004
+        function hideRegister_004() {
+            document.getElementById('registerSection').classList.add('hidden');
+        }
+        // پایان تابع hideRegister_004
+        
+        // تابع ورود کاربر - شماره 005
+// تابع ورود کاربر - شماره 005
+function userLogin_005() {
+    const serial = document.getElementById('userSerial').value.trim();
+    const username = document.getElementById('userUsername').value.trim();
+    const password = document.getElementById('userPassword').value.trim();
+    const messageDiv = document.getElementById('loginMessage');
+    
+    if (!serial || !username || !password) {
+        showMessage_999(messageDiv, 'همه فیلدها را پر کنید', 'error');
+        return;
+    }
+    
+    fetch('karvan_manager.php?action=user_login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            serial: parseInt(serial),
+            username: username,
+            password: password
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            currentSerial = serial;
+            currentUsername = username;
+            currentChatPermission = data.chat_permission || 'read_write';
+            
+            document.getElementById('userNameDisplay').textContent = '👤 ' + data.username;
+            
+            // ذخیره اطلاعات
+            localStorage.setItem('user_serial', serial);
+            localStorage.setItem('user_username', username);
+            localStorage.setItem('user_password', password);
+            
+            document.getElementById('entrySection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            
+            // تنظیم دسترسی چت
+            if (currentChatPermission === 'no_access' || currentChatPermission === 'read_only') {
+                document.getElementById('chatInput').disabled = true;
+                if (currentChatPermission === 'no_access') {
+                    document.getElementById('chatSection').style.display = 'none';
+                } else {
+                    document.getElementById('chatInput').placeholder = 'دسترسی فقط خواندن';
+                }
+            }
+            
+            // ابتدا درخواست مجوز موقعیت
+            requestLocationPermission_014();
+            
+            // بارگذاری اولیه چت
+            loadChatMessages_012();
+            // بارگذاری اولیه نقشه
+            loadGroupMap_008();
+            
+            showMessage_999(messageDiv, '✅ ورود موفق', 'success');
+        } else {
+            showMessage_999(messageDiv, data.message, 'error');
+            if (data.message.includes('منقضی')) {
+                localStorage.removeItem('user_serial');
+                localStorage.removeItem('user_username');
+                localStorage.removeItem('user_password');
+            }
+        }
+    })
+    .catch(error => {
+        showMessage_999(messageDiv, 'خطا در ارتباط با سرور', 'error');
+        console.error('Error:', error);
+    });
+}
+// پایان تابع userLogin_005
+        // پایان تابع userLogin_005
+        
+        // تابع مخفی کردن فرم ورود - شماره 006
+        function hideLogin_006() {
+            document.getElementById('loginSection').classList.add('hidden');
+        }
+        // پایان تابع hideLogin_006
+        
+        // تابع ارسال موقعیت لحظه‌ای - شماره 007
+// تابع ارسال موقعیت لحظه‌ای - شماره 007
+function sendLocationNow_007() {
+    const statusDiv = document.getElementById('locationStatus');
+    statusDiv.textContent = '⏳ در حال دریافت موقعیت...';
+    
+    if (!navigator.geolocation) {
+        statusDiv.textContent = '❌ مرورگر شما از موقعیت‌یابی پشتیبانی نمی‌کند';
+        return;
+    }
+    
+    // گزینه‌های موقعیت‌یابی با دقت بالا و timeout مناسب
+    const options = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000
+    };
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
+            
+            sendLocationToServer_013(lat, lng, time, function(success) {
+                if (success) {
+                    statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد (GPS)';
+                    setTimeout(() => {
+                        statusDiv.textContent = '📡 موقعیت‌یابی فعال';
+                    }, 3000);
+                } else {
+                    statusDiv.textContent = '❌ خطا در ارسال موقعیت';
+                }
+            });
+        },
+        function(error) {
+            console.warn('GPS Error:', error);
+            statusDiv.textContent = '⏳ GPS در دسترس نیست، تلاش با روش جایگزین...';
+            
+            const fallbackOptions = {
+                enableHighAccuracy: false,
+                timeout: 10000,
+                maximumAge: 120000
+            };
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
+                    
+                    sendLocationToServer_013(lat, lng, time, function(success) {
+                        if (success) {
+                            statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد (تقریبی)';
+                            setTimeout(() => {
+                                statusDiv.textContent = '📡 موقعیت‌یابی فعال (تقریبی)';
+                            }, 3000);
+                        } else {
+                            statusDiv.textContent = '❌ خطا در ارسال موقعیت';
+                        }
+                    });
+                },
+                function(fallbackError) {
+                    statusDiv.textContent = '❌ خطا در دریافت موقعیت: ' + fallbackError.message;
+                    console.error('Fallback error:', fallbackError);
+                },
+                fallbackOptions
+            );
+        },
+        options
+    );
+}
+// پایان تابع sendLocationNow_007
+        // پایان تابع sendLocationNow_007
+        
+        // تابع بارگذاری نقشه گروهی - شماره 008
+// تابع بارگذاری نقشه گروهی - شماره 008
+// ورودی: دریافت لیست موقعیت‌ها از سرور
+// خروجی: نمایش نقشه با موقعیت افراد
+let map = null;
+let mapMarkers = {};
+
+function loadGroupMap_008() {
+    const container = document.getElementById('mapContainer');
+    
+    if (!currentSerial) {
+        container.innerHTML = '?? شماره سريال مشخص نيست';
+        return;
+    }
+    
+    // اگر نقشه وجود دارد، فقط نشانگرها را بروزرساني مي‌کنيم
+    if (map) {
+        updateGroupMarkers_017();
+        return;
+    }
+    
+    // اگر نقشه وجود ندارد، ايجاد مي‌کنيم
+    container.innerHTML = '';
+    container.style.height = '400px';
+    container.style.width = '100%';
+    
+    map = L.map(container.id).setView([35.6892, 51.3890], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    updateGroupMarkers_017();
+}
+// پايان تابع loadGroupMap_008
+// پایان تابع loadGroupMap_008
+        // پایان تابع loadGroupMap_008
+
+// تابع بروزرساني نشانگرهاي نقشه گروهي - شماره 017
+function updateGroupMarkers_017() {
+    if (!map) return;
+    
+    fetch(`karvan_manager.php?action=get_locations&serial=${currentSerial}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // حذف نشانگرهاي قبلي
+            Object.values(mapMarkers).forEach(marker => {
+                map.removeLayer(marker);
+            });
+            mapMarkers = {};
+            
+            if (data.data.length === 0) {
+                return;
+            }
+            
+            data.data.forEach(loc => {
+                const isSelf = loc.username === currentUsername;
+                const isLeader = loc.username === 'leader';
+                
+                const iconColor = isLeader ? '#FF9800' : (isSelf ? '#2196F3' : '#4CAF50');
+                const iconText = isLeader ? '??' : (isSelf ? '??' : '');
+                
+                const icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color:${iconColor};width:30px;height:30px;border-radius:50%;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;color:white;font-weight:bold;">${iconText}</div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 30],
+                    popupAnchor: [0, -30]
+                });
+                
+                const marker = L.marker([loc.latitude, loc.longitude], { icon: icon })
+                    .addTo(map)
+                    .bindPopup(`
+                        <div style="direction:rtl;text-align:right;font-family:Tahoma;">
+                            <h4 style="margin:0 0 5px 0;color:#333;">${isLeader ? '?? ' : ''}${loc.username} ${isSelf ? '(شما)' : ''}</h4>
+                            <hr style="margin:5px 0;">
+                            <p style="margin:3px 0;font-size:13px;color:#666;">
+                                <strong>عرض:</strong> ${loc.latitude}<br>
+                                <strong>طول:</strong> ${loc.longitude}<br>
+                                <strong>زمان:</strong> ${loc.location_time}
+                            </p>
+                        </div>
+                    `);
+                
+                mapMarkers[loc.username] = marker;
+            });
+            
+            if (Object.keys(mapMarkers).length > 0) {
+                const group = L.featureGroup(Object.values(mapMarkers));
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+// پايان تابع updateGroupMarkers_017
+        
+        // تابع ارسال پیام چت - شماره 009
+        function sendChatMessage_009() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message || !currentSerial || currentChatPermission !== 'read_write') {
+                if (currentChatPermission !== 'read_write') {
+                    alert('شما اجازه ارسال پیام ندارید');
+                }
+                return;
+            }
+            
+            fetch('karvan_manager.php?action=send_chat_message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    serial: parseInt(currentSerial), 
+                    username: currentUsername, 
+                    message: message 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    input.value = '';
+                    loadChatMessages_012();
+                } else {
+                    alert('خطا در ارسال پیام: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('خطا در ارتباط با سرور');
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع sendChatMessage_009
+        
+        // تابع خروج از پنل کاربر - شماره 010
+        function userLogout_010() {
+            if (locationInterval) {
+                clearInterval(locationInterval);
+                locationInterval = null;
+            }
+            if (chatInterval) {
+                clearInterval(chatInterval);
+                chatInterval = null;
+            }
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('entrySection').classList.remove('hidden');
+            currentSerial = '';
+            currentUsername = '';
+            currentChatPermission = 'read_write';
+        }
+        // پایان تابع userLogout_010
+        
+        // تابع شروع ردیابی موقعیت - شماره 011
+// تابع شروع ردیابی موقعیت - شماره 011
+// تابع شروع ردیابی موقعیت - شماره 011
+function startLocationTracking_011() {
+    if (locationInterval) {
+        clearInterval(locationInterval);
+        locationInterval = null;
+    }
+    
+    if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+            if (result.state === 'granted') {
+                sendLocationNow_007();
+                locationInterval = setInterval(function() {
+                    sendLocationNow_007();
+                }, 300000);
+            } else {
+                requestLocationPermission_014();
+            }
+        });
+    } else {
+        sendLocationNow_007();
+        locationInterval = setInterval(function() {
+            sendLocationNow_007();
+        }, 300000);
+    }
+}
+// پایان تابع startLocationTracking_011
+// پایان تابع startLocationTracking_011
+        // پایان تابع startLocationTracking_011
+        
+        // تابع بارگذاری پیام‌های چت - شماره 012
+        function loadChatMessages_012() {
+            const container = document.getElementById('chatBox');
+            
+            if (!currentSerial) {
+                container.innerHTML = '<p style="color:#999;text-align:center;">شماره سریال مشخص نیست</p>';
+                return;
+            }
+            
+            fetch(`karvan_manager.php?action=get_chat_messages&serial=${currentSerial}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.data.length === 0) {
+                        container.innerHTML = '<p style="color:#999;text-align:center;">هنوز پیامی ارسال نشده است</p>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    data.data.forEach(msg => {
+                        const isSelf = msg.username === currentUsername;
+                        const isLeader = msg.username === 'leader';
+                        const icon = isLeader ? '👑' : '';
+                        
+                        html += `
+                            <div class="chat-message ${isSelf ? 'self' : ''}">
+                                <span class="user">${icon} ${msg.username} ${isSelf ? '(شما)' : ''}</span>
+                                <span class="time">${msg.created_at}</span>
+                                <div>${msg.message}</div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    container.scrollTop = container.scrollHeight;
+                }
+            })
+            .catch(error => {
+                container.innerHTML = '<p style="color:#999;text-align:center;">خطا در دریافت پیام‌ها</p>';
+                console.error('Error:', error);
+            });
+        }
+        // پایان تابع loadChatMessages_012
+        
+        // تابع ارسال موقعیت به سرور - شماره 013
+        function sendLocationToServer_013(lat, lng, time, callback) {
+            if (!currentSerial || !currentUsername) {
+                if (callback) callback(false);
+                return;
+            }
+            
+            fetch('karvan_manager.php?action=send_location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    serial: parseInt(currentSerial),
+                    username: currentUsername,
+                    latitude: lat,
+                    longitude: lng,
+                    location_time: time
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (callback) callback(data.status === 'success');
+            })
+            .catch(error => {
+                console.error('Error sending location:', error);
+                if (callback) callback(false);
+            });
+        }
+        // پایان تابع sendLocationToServer_013
+// تابع درخواست مجوز موقعیت - شماره 014
+// تابع درخواست مجوز موقعيت - شماره 014
+function requestLocationPermission_014() {
+    const statusDiv = document.getElementById('locationStatus');
+    
+    if (!navigator.geolocation) {
+        statusDiv.textContent = '? مرورگر شما از موقعيت‌يابي پشتيباني نمي‌کند';
+        return;
+    }
+    
+    if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+            if (result.state === 'granted') {
+                statusDiv.textContent = '? دسترسي به موقعيت داده شده است';
+                startLocationTracking_011();
+            } else if (result.state === 'prompt') {
+                statusDiv.textContent = '? درخواست دسترسي به موقعيت...';
+                askForLocation_015();
+            } else if (result.state === 'denied') {
+                statusDiv.innerHTML = `
+                    ? دسترسي به موقعيت در مرورگر رد شده است.
+                    <br><br>
+                    <strong style="color:#d32f2f;">براي فعال کردن:</strong>
+                    <ol style="text-align:right;margin:10px 20px;font-size:13px;line-height:2;">
+                        <li>روي آدرس سايت در نوار آدرس کليک کنيد</li>
+                        <li>گزينه <strong>"Allow location access"</strong> را انتخاب کنيد</li>
+                        <li>سپس روي دکمه زير کليک کنيد</li>
+                    </ol>
+                    <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;">
+                        ?? بروزرساني صفحه
+                    </button>
+                `;
+            }
+        }).catch(function() {
+            askForLocation_015();
+        });
+    } else {
+        askForLocation_015();
+    }
+}
+// پايان تابع requestLocationPermission_014
+// پایان تابع requestLocationPermission_014
+
+// تابع درخواست موقعیت - شماره 015
+// تابع درخواست موقعيت - شماره 015
+function askForLocation_015() {
+    const statusDiv = document.getElementById('locationStatus');
+    statusDiv.textContent = '?? در حال دريافت مجوز موقعيت...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            statusDiv.textContent = '? دسترسي به موقعيت داده شد';
+            
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
+            
+            sendLocationToServer_013(lat, lng, time, function(success) {
+                if (success) {
+                    statusDiv.textContent = '? موقعيت با موفقيت ارسال شد';
+                } else {
+                    statusDiv.textContent = '?? موقعيت دريافت شد اما در ارسال خطا رخ داد';
+                }
+            });
+            
+            startLocationTracking_011();
+        },
+        function(error) {
+            console.warn('Location permission denied:', error);
+            
+            if (error.code === 1) {
+                statusDiv.innerHTML = `
+                    ? دسترسي به موقعيت رد شد.
+                    <br><br>
+                    <strong style="color:#d32f2f;">براي فعال کردن:</strong>
+                    <ol style="text-align:right;margin:10px 20px;font-size:13px;line-height:2;">
+                        <li>روي آدرس سايت در نوار آدرس کليک کنيد</li>
+                        <li>گزينه <strong>"Allow location access"</strong> را انتخاب کنيد</li>
+                        <li>سپس روي دکمه زير کليک کنيد</li>
+                    </ol>
+                    <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;">
+                        ?? بروزرساني صفحه
+                    </button>
+                `;
+            } else {
+                statusDiv.textContent = '? خطا در دريافت موقعيت: ' + error.message;
+            }
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+// پايان تابع askForLocation_015
+// پایان تابع askForLocation_015
+
+// تابع نمایش پیام رد مجوز - شماره 016
+// تابع نمايش پيام رد مجوز - شماره 016
+function showLocationDeniedMessage_016() {
+    const statusDiv = document.getElementById('locationStatus');
+    statusDiv.innerHTML = `
+        <div style="background:#fff3cd;padding:15px;border-radius:10px;border:2px solid #ffc107;">
+            <span style="font-size:24px;">?</span>
+            <strong style="color:#856404;">دسترسي به موقعيت داده نشد</strong>
+            <br><br>
+            <div style="text-align:right;font-size:13px;color:#333;line-height:2;">
+                <strong>?? راه حل در گوشي:</strong>
+                <ol style="margin:5px 20px;">
+                    <li>آدرس سايت را در مرورگر باز کنيد</li>
+                    <li>روي <strong>آيکون قفل ??</strong> يا <strong>آيکون اطلاعات ??</strong> در نوار آدرس کليک کنيد</li>
+                    <li>گزينه <strong>"دسترسي به موقعيت"</strong> يا <strong>"Location"</strong> را پيدا کنيد</li>
+                    <li>آن را به <strong>"Allow"</strong> يا <strong>"مجاز"</strong> تغيير دهيد</li>
+                    <li>سپس روي دکمه زير کليک کنيد</li>
+                </ol>
+            </div>
+            <button class="btn btn-sm btn-success" onclick="checkLocationPermission_018()" style="margin-top:10px;padding:10px 20px;font-size:14px;">
+                ?? بررسي مجدد دسترسي
+            </button>
+            <button class="btn btn-sm btn-warning" onclick="location.reload()" style="margin-top:10px;padding:10px 20px;font-size:14px;">
+                ?? بروزرساني صفحه
+            </button>
+        </div>
+    `;
+}
+// پايان تابع showLocationDeniedMessage_016
+// پایان تابع showLocationDeniedMessage_016
+
+// تابع بررسی مجدد دسترسی موقعیت - شماره 018
+// تابع بررسی مجدد دسترسی موقعیت - شماره 018
+function checkLocationPermission_018() {
+    const statusDiv = document.getElementById('locationStatus');
+    statusDiv.textContent = '⏳ در حال بررسی مجدد دسترسی...';
+    
+    // کوئری مستقیم به Geolocation API
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            statusDiv.textContent = '✅ دسترسی به موقعیت داده شده است';
+            startLocationTracking_011();
+            
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
+            sendLocationToServer_013(lat, lng, time, function(success) {
+                if (success) {
+                    statusDiv.textContent = '✅ موقعیت با موفقیت ارسال شد';
+                }
+            });
+        },
+        function(error) {
+            console.warn('Geolocation error:', error);
+            
+            if (error.code === 1) {
+                statusDiv.innerHTML = `
+                    ⛔ دسترسی به موقعیت داده نشد.
+                    <br>
+                    <span style="font-size:13px;color:#666;">
+                        لطفاً از تنظیمات مرورگر دسترسی را فعال کنید، سپس 
+                        <strong>صفحه را ببندید و دوباره باز کنید</strong>.
+                    </span>
+                    <br><br>
+                    <button class="btn btn-sm btn-primary" onclick="location.href=location.href" style="margin-top:5px;padding:8px 20px;">
+                        🔄 باز کردن مجدد صفحه
+                    </button>
+                `;
+            } else {
+                statusDiv.textContent = '❌ خطا در دریافت موقعیت: ' + error.message;
+            }
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+// پایان تابع checkLocationPermission_018
+// پایان تابع checkLocationPermission_018
+
+        // تابع نمایش پیام - شماره 999
+        function showMessage_999(element, message, type) {
+            element.textContent = message;
+            element.className = 'message message-' + type;
+            element.classList.remove('hidden');
+            setTimeout(() => {
+                element.classList.add('hidden');
+            }, 5000);
+        }
+        // پایان تابع showMessage_999
+        
+        // بارگذاری اولیه
+        document.addEventListener('DOMContentLoaded', function() {
+            // بررسی ذخیره شده‌ها
+            const savedSerial = localStorage.getItem('user_serial');
+            const savedUsername = localStorage.getItem('user_username');
+            const savedPassword = localStorage.getItem('user_password');
+            
+            if (savedSerial) document.getElementById('userSerial').value = savedSerial;
+            if (savedUsername) document.getElementById('userUsername').value = savedUsername;
+            if (savedPassword) document.getElementById('userPassword').value = savedPassword;
+        });
+    </script>
+</body>
+</html>
